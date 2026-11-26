@@ -29,6 +29,8 @@
   <a href="https://liangfeiiiii.github.io/feis-wx-svg/" target="_blank">
     <img src="assets/gallery-hero.png" alt="非叔 SVG 助手 · 斜向瀑布示例画廊" width="100%" />
   </a>
+  <br />
+  <sub><a href="https://liangfeiiiii.github.io/feis-wx-svg/" target="_blank">点击上方画廊图片，直接进入在线交互展厅体验全部动效 ↗</a></sub>
 </p>
 
 | 编号 | 示例类型 | 核心效果 | 在线体验与源码 |
