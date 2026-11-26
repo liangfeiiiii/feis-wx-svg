@@ -1,0 +1,98 @@
+{
+  "title": "我给公众号做了套苹果风 SVG 动效工具",
+  "theme": "apple-light",
+  "modules": [
+    {
+      "type": "hero-metric",
+      "name": "原生动效零负担",
+      "kicker": "FEIS-WX-SVG",
+      "metric": "0",
+      "unit": "行 JS 代码",
+      "title": "无视频、无 GIF，公众号原生渲染",
+      "subtitle": "纯 SVG 原生时间轴驱动，单模块轻至几 KB，打开正文即刻丝滑呈现。"
+    },
+    {
+      "type": "compare-split",
+      "name": "公众号删什么留什么",
+      "kicker": "WECHAT RULES",
+      "title": "微信后台的静默清洗规则",
+      "left": {
+        "tag": "会被直接删掉",
+        "items": [
+          "所有 id 与跨元素引用",
+          "fill-opacity 透明动画",
+          "滤镜、渐变与遮罩裁切",
+          "style 标签与自定义字体",
+          "任意脚本与交互事件"
+        ]
+      },
+      "right": {
+        "tag": "原生稳定保留",
+        "items": [
+          "animate 属性平滑过渡",
+          "animateTransform 位移缩放",
+          "spline 贝塞尔阻尼曲线",
+          "线条绘制与错峰入场",
+          "单元素点击触发交互"
+        ]
+      }
+    },
+    {
+      "type": "bento-grid",
+      "name": "为什么选图文混排路线",
+      "kicker": "ARCHITECTURE",
+      "title": "正文可读，关键处有秩序",
+      "cards": [
+        {
+          "label": "READING",
+          "value": "原生正文排版",
+          "desc": "文字照常划词、复制与调字号，长文阅读零压力",
+          "highlight": true
+        },
+        {
+          "label": "RHYTHM",
+          "value": "三秒定格",
+          "desc": "模块轻盈入场后安静停驻，不抢正文焦点"
+        },
+        {
+          "label": "ADAPTIVE",
+          "value": "深浅色友好",
+          "desc": "显式声明卡片底色，微信深色模式同样清晰"
+        }
+      ]
+    },
+    {
+      "type": "flow-strip",
+      "name": "三步完成发稿闭环",
+      "kicker": "WORKFLOW",
+      "title": "复杂留给系统，顺手留给自己",
+      "steps": [
+        {
+          "num": "01",
+          "title": "一键生成模块包",
+          "desc": "写好配置 JSON，纯 Python 零依赖打包整篇动效模块"
+        },
+        {
+          "num": "02",
+          "title": "拖进 Chrome 侧边栏",
+          "desc": "自动完成微信规则体检，支持深浅底实时预览与重播"
+        },
+        {
+          "num": "03",
+          "title": "直接插入公众号光标处",
+          "desc": "无需中转网页，点一下落入正文，已插模块自动标记"
+        }
+      ],
+      "footnote": "全程本地闭环运行，不上传任何文章内容"
+    },
+    {
+      "type": "quote-seal",
+      "name": "少即是多收尾卡",
+      "theme": "apple-dark",
+      "kicker": "FEIS NOTE",
+      "quote": "高级感不来自堆砌元素，来自知道哪里该停下来。",
+      "subquote": "把复杂留给系统，把秩序留给版面。",
+      "author": "FEIS · 非叔"
+    }
+  ]
+}

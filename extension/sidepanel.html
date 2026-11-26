@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>非叔 SVG 助手</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="app" id="app" data-has-items="false" data-preview-bg="light" data-wechat="false">
+    <!-- 顶部极简导航栏 -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">非叔 SVG</span>
+      </div>
+      <div class="status-pill" id="statusPill" data-state="offline" title="自动感知当前标签页">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-text" id="statusText">复制模式</span>
+      </div>
+    </header>
+
+    <!-- 工具条：仅在有模块时出现 -->
+    <section class="toolbar" id="toolbar" aria-label="视图与操作控制">
+      <div class="pack-meta">
+        <span class="pack-title" id="packTitle">未命名模块包</span>
+        <span class="pack-stat" id="packStat">0 个模块</span>
+      </div>
+      <div class="toolbar-actions">
+        <div class="segmented" role="radiogroup" aria-label="预览底色">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn" type="button" data-bg="light" aria-checked="true" role="radio">浅底</button>
+          <button class="seg-btn" type="button" data-bg="dark" aria-checked="false" role="radio">深底</button>
+        </div>
+        <button class="icon-btn" id="btnReplayAll" type="button" title="重播全部动效" aria-label="重播全部动效">
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16.2 10a6.2 6.2 0 1 1-1.6-4.2"/>
+            <path d="M16.2 3.8v3.1h-3.1"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="btnAddMore" type="button" title="导入更多模块" aria-label="导入更多模块">
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+            <path d="M10 4.5v11M4.5 10h11"/>
+          </svg>
+        </button>
+        <button class="danger-btn" id="btnClear" type="button" data-armed="false" title="清空当前列表">
+          <span class="danger-label">清空</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 主内容区 -->
+    <main class="main" id="main">
+      <!-- 空态拖放区 -->
+      <section class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="拖入 feis-pack.json 或 SVG / HTML 文件">
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="8" width="26" height="24" rx="6"/>
+            <path d="M20 24V15"/>
+            <path d="M16 18.5L20 14.5L24 18.5"/>
+          </svg>
+        </div>
+        <h2 class="dropzone-title">拖入模块包或 SVG 文件</h2>
+        <p class="dropzone-sub">支持 feis-pack.json、单模块 .html 或 .svg<br>自动体检微信规则，本地处理不上传</p>
+        <div class="dropzone-actions">
+          <button class="pill-btn primary" id="btnPickFile" type="button">选择文件</button>
+          <button class="pill-btn ghost" id="btnFromClipboard" type="button">从剪贴板导入</button>
+        </div>
+      </section>
+
+      <!-- 模块卡片列表 -->
+      <section class="module-list" id="moduleList" aria-live="polite"></section>
+    </main>
+
+    <!-- 全屏拖放浮层（已有模块时拖入文件） -->
+    <div class="drag-overlay" id="dragOverlay" aria-hidden="true">
+      <div class="drag-overlay-card">
+        <span class="drag-overlay-title">松手导入模块</span>
+        <span class="drag-overlay-sub">自动识别 feis-pack.json 或单个 SVG / HTML</span>
+      </div>
+    </div>
+
+    <!-- 隐藏文件选择器 -->
+    <input type="file" id="fileInput" accept=".json,.html,.htm,.svg" multiple hidden>
+
+    <!-- 底部轻提示胶囊（支持带撤销） -->
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span class="toast-msg" id="toastMsg"></span>
+      <button class="toast-undo" id="toastUndo" type="button" hidden>撤销</button>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
