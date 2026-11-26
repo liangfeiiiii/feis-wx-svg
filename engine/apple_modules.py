@@ -75,27 +75,82 @@ def n(v):
     return f"{v:.2f}".rstrip("0").rstrip(".") if isinstance(v, float) else str(v)
 
 
-def fade_up(begin, dur=0.55, dy=16):
+CYCLE = 9.0  # 9 秒循环周期：前 2.2s 从 0→1 完整生长，中间 6s 清晰停留可读，末尾柔和重启
+
+
+def _kt(cycle, *ts):
+    return ";".join(f"{min(max(t / cycle, 0.0), 1.0):.4f}".rstrip("0").rstrip(".") or "0" for t in ts)
+
+
+def loop_fade_up(t_in, dur=0.65, dy=18, cycle=CYCLE):
+    """在 cycle 秒周期内：t_in 时从 0→1 轻盈上浮生长，停留至末尾柔和收束再循环。"""
+    t0 = max(t_in, 0.02)
+    t1 = min(t0 + dur, cycle - 1.2)
+    t_hold = cycle - 0.85
+    t_out = cycle - 0.28
+    kt = _kt(cycle, 0, t0, t1, t_hold, t_out, cycle)
+    ks = "0 0 1 1;0.22 1 0.36 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1"
     return (
-        f'<animate attributeName="opacity" values="0;1" begin="{n(begin)}s" dur="{n(dur)}s" fill="freeze" {EASE}/>'
-        f'<animateTransform attributeName="transform" type="translate" values="0 {n(dy)};0 0" '
-        f'begin="{n(begin)}s" dur="{n(dur)}s" fill="freeze" {EASE}/>'
+        f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
+        f'<animateTransform attributeName="transform" type="translate" '
+        f'values="0 {n(dy)};0 {n(dy)};0 0;0 0;0 -6;0 {n(dy)}" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
     )
 
 
-def fade_in(begin, dur=0.45):
-    return f'<animate attributeName="opacity" values="0;1" begin="{n(begin)}s" dur="{n(dur)}s" fill="freeze" {EASE}/>'
+def loop_fade_in(t_in, dur=0.55, cycle=CYCLE):
+    t0 = max(t_in, 0.02)
+    t1 = min(t0 + dur, cycle - 1.2)
+    t_hold = cycle - 0.85
+    t_out = cycle - 0.28
+    kt = _kt(cycle, 0, t0, t1, t_hold, t_out, cycle)
+    ks = "0 0 1 1;0.22 1 0.36 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1"
+    return (
+        f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
+    )
 
 
-def draw_line(x1, y1, x2, y2, stroke, width, begin, dur=0.6, opacity=1.0):
+def loop_draw_line(x1, y1, x2, y2, stroke, width, t_in, dur=0.7, opacity=1.0, cycle=CYCLE):
+    """线条在周期内从 0 长度一笔拉出，停留展示后柔和淡出再重画。"""
     length = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    t0 = max(t_in, 0.02)
+    t1 = min(t0 + dur, cycle - 1.2)
+    t_hold = cycle - 0.85
+    t_out = cycle - 0.28
+    kt = _kt(cycle, 0, t0, t1, t_hold, t_out, cycle)
+    ks = "0 0 1 1;0.22 1 0.36 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1"
+    L = n(length)
+    op = n(opacity)
     return (
         f'<line x1="{n(x1)}" y1="{n(y1)}" x2="{n(x2)}" y2="{n(y2)}" '
         f'stroke="{stroke}" stroke-width="{n(width)}" stroke-linecap="round" '
-        f'stroke-dasharray="{n(length)}" stroke-dashoffset="{n(length)}" opacity="{n(opacity)}">'
-        f'<animate attributeName="stroke-dashoffset" values="{n(length)};0" '
-        f'begin="{n(begin)}s" dur="{n(dur)}s" fill="freeze" {EASE}/>'
+        f'stroke-dasharray="{L}" stroke-dashoffset="{L}">'
+        f'<animate attributeName="stroke-dashoffset" values="{L};{L};0;0;0;{L}" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
+        f'<animate attributeName="opacity" values="0;{op};{op};{op};0;0" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
         f'</line>'
+    )
+
+
+def loop_draw_path(d, stroke, width, length, t_in, dur=0.4, cycle=CYCLE):
+    t0 = max(t_in, 0.02)
+    t1 = min(t0 + dur, cycle - 1.2)
+    t_hold = cycle - 0.85
+    t_out = cycle - 0.28
+    kt = _kt(cycle, 0, t0, t1, t_hold, t_out, cycle)
+    ks = "0 0 1 1;0.22 1 0.36 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1"
+    L = n(length)
+    return (
+        f'<path d="{d}" fill="none" stroke="{stroke}" stroke-width="{n(width)}" '
+        f'stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="{L}" stroke-dashoffset="{L}">'
+        f'<animate attributeName="stroke-dashoffset" values="{L};{L};0;0;0;{L}" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
+        f'<animate attributeName="opacity" values="0;1;1;1;0;0" keyTimes="{kt}" '
+        f'dur="{n(cycle)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks}"/>'
+        f'</path>'
     )
 
 
@@ -142,7 +197,7 @@ def wrap_section(svg_body, height, bg):
     )
 
 
-# ---------- 1. hero-metric ----------
+# ---------- 1. hero-metric（9 秒周期：0→1 完整生长 + 6 秒清晰停留 + 轻柔公转呼吸） ----------
 
 def render_hero_metric(mod, th):
     kicker = escape(mod.get("kicker", ""))
@@ -155,51 +210,59 @@ def render_hero_metric(mod, th):
     h = 370 + max(len(sub_lines) - 1, 0) * 32
     els = []
 
+    # 右侧极简同心圆环：随周期从 0→1 优雅渐显，并保持慢速公转呼吸
     els.append(
         f'<g opacity="0">'
-        f'<circle cx="640" cy="128" r="118" fill="none" stroke="{th["border"]}" stroke-width="1.5"/>'
-        f'<circle cx="640" cy="128" r="76" fill="none" stroke="{th["accent"]}" stroke-width="1.5" opacity="0.28"/>'
-        f'<circle cx="640" cy="128" r="6" fill="{th["accent"]}"/>'
-        f'{fade_in(0.35, 0.7)}</g>'
+        f'<circle cx="608" cy="126" r="98" fill="none" stroke="{th["border"]}" stroke-width="1.5"/>'
+        f'<circle cx="608" cy="126" r="64" fill="none" stroke="{th["accent"]}" stroke-width="1.5" opacity="0.28"/>'
+        f'<g>'
+        f'<circle cx="608" cy="62" r="4.5" fill="{th["accent"]}" opacity="0.9"/>'
+        f'<animateTransform attributeName="transform" type="rotate" from="0 608 126" to="360 608 126" dur="9s" repeatCount="indefinite"/>'
+        f'</g>'
+        f'<circle cx="608" cy="126" r="7" fill="{th["accent"]}">'
+        f'<animate attributeName="opacity" values="1;0.45;1" dur="2.6s" repeatCount="indefinite"/>'
+        f'</circle>'
+        f'{loop_fade_in(0.35, 0.7)}</g>'
     )
 
     if kicker:
         els.append(
             f'<g opacity="0"><text x="52" y="72" font-size="22" font-weight="600" letter-spacing="1.8" '
-            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{fade_up(0.08, 0.45, 10)}</g>'
+            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{loop_fade_up(0.08, 0.5, 12)}</g>'
         )
 
     metric_size = 112 if len(metric) <= 4 else (88 if len(metric) <= 7 else 68)
-    metric_w = sum(metric_size * (0.95 if ord(c) > 0x2E7F else 0.62) for c in str(mod.get("metric", "")))
+    metric_w = sum(metric_size * (0.95 if ord(c) > 0x2E7F else 0.66) for c in str(mod.get("metric", "")))
     els.append(
         f'<g opacity="0">'
         f'<text x="48" y="198" font-size="{metric_size}" font-weight="700" letter-spacing="-2" '
         f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{metric}</text>'
         + (
-            f'<text x="{n(56 + metric_w)}" y="194" font-size="30" font-weight="600" '
+            f'<text x="{n(68 + metric_w)}" y="192" font-size="30" font-weight="600" '
             f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{unit}</text>'
             if unit else ""
         )
-        + f'{fade_up(0.22, 0.6, 20)}</g>'
+        + f'{loop_fade_up(0.24, 0.65, 22)}</g>'
     )
 
-    els.append(draw_line(52, 232, 698, 232, th["border"], 1.5, 0.48, 0.65))
-    els.append(draw_line(52, 232, 132, 232, th["accent"], 2.5, 0.52, 0.55))
+    # 分割细线从左向右一笔拉出
+    els.append(loop_draw_line(52, 232, 698, 232, th["border"], 1.5, 0.52, 0.7))
+    els.append(loop_draw_line(52, 232, 148, 232, th["accent"], 2.5, 0.58, 0.6))
 
     els.append(
         f'<g opacity="0"><text x="52" y="286" font-size="32" font-weight="700" letter-spacing="-0.5" '
-        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{fade_up(0.62, 0.5, 12)}</g>'
+        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{loop_fade_up(0.72, 0.55, 14)}</g>'
     )
     for i, line in enumerate(sub_lines):
         els.append(
             f'<g opacity="0"><text x="52" y="{n(330 + i * 34)}" font-size="23" font-weight="400" '
-            f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{escape(line)}</text>{fade_up(0.76 + i * 0.1, 0.5, 10)}</g>'
+            f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{escape(line)}</text>{loop_fade_up(0.9 + i * 0.14, 0.55, 12)}</g>'
         )
 
     return wrap_section("".join(els), h, th["bg"])
 
 
-# ---------- 2. compare-split ----------
+# ---------- 2. compare-split（9 秒周期：左先右后生长 + 对勾逐笔绘制） ----------
 
 def render_compare_split(mod, th):
     kicker = escape(mod.get("kicker", ""))
@@ -219,70 +282,75 @@ def render_compare_split(mod, th):
     if kicker:
         els.append(
             f'<g opacity="0"><text x="48" y="64" font-size="21" font-weight="600" letter-spacing="1.6" '
-            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{fade_up(0.05, 0.45, 10)}</g>'
+            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{loop_fade_up(0.06, 0.45, 10)}</g>'
         )
     els.append(
         f'<g opacity="0"><text x="48" y="114" font-size="36" font-weight="700" letter-spacing="-0.8" '
-        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{fade_up(0.14, 0.5, 14)}</g>'
+        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{loop_fade_up(0.16, 0.55, 14)}</g>'
     )
 
-    lx, lw = 48, 316
+    def fit_font_size(text, base=22, max_w=244):
+        est = sum(base * (1.0 if ord(c) > 0x2E7F else 0.58) for c in text)
+        if est <= max_w:
+            return base
+        return max(16.5, round(base * max_w / est, 1))
+
+    lx, lw = 38, 328
     els.append(
         f'<g opacity="0">'
         f'<rect x="{lx}" y="{card_y}" width="{lw}" height="{card_h}" rx="22" '
         f'fill="{th["card_alt"]}" stroke="{th["border"]}" stroke-width="1"/>'
-        f'<rect x="{lx + 24}" y="{card_y + 24}" width="12" height="12" rx="6" fill="{th["danger"]}" opacity="0.75"/>'
+        f'<rect x="{lx + 24}" y="{card_y + 24}" width="12" height="12" rx="6" fill="{th["danger"]}" opacity="0.72"/>'
         f'<text x="{lx + 46}" y="{card_y + 37}" font-size="22" font-weight="700" '
         f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{escape(left.get("tag", "旧方式"))}</text>'
-        f'{fade_up(0.32, 0.55, 16)}</g>'
+        f'{loop_fade_up(0.32, 0.55, 16)}</g>'
     )
-    els.append(draw_line(lx + 24, card_y + 60, lx + lw - 24, card_y + 60, th["border"], 1, 0.48, 0.45))
+    els.append(loop_draw_line(lx + 24, card_y + 60, lx + lw - 24, card_y + 60, th["border"], 1, 0.48, 0.5))
 
     for i, item in enumerate(l_items):
         iy = card_y + 104 + i * row_h
-        t = 0.55 + i * 0.14
+        fs = fit_font_size(item, 22, lw - 74)
         els.append(
             f'<g opacity="0">'
-            f'<line x1="{lx + 26}" y1="{iy - 8}" x2="{lx + 40}" y2="{iy - 8}" '
-            f'stroke="{th["danger"]}" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>'
-            f'<text x="{lx + 54}" y="{iy}" font-size="23" font-weight="500" '
+            f'<line x1="{lx + 24}" y1="{iy - 8}" x2="{lx + 38}" y2="{iy - 8}" '
+            f'stroke="{th["danger"]}" stroke-width="2.2" stroke-linecap="round" opacity="0.65"/>'
+            f'<text x="{lx + 50}" y="{iy}" font-size="{n(fs)}" font-weight="500" '
             f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{escape(item)}</text>'
-            f'{fade_up(t, 0.45, 10)}</g>'
+            f'{loop_fade_up(0.56 + i * 0.14, 0.45, 10)}</g>'
         )
 
-    rx, rw = 386, 316
+    rx, rw = 384, 328
     els.append(
         f'<g opacity="0">'
-        f'<rect x="{rx}" y="{card_y}" width="{rw}" height="{card_h}" rx="22" '
-        f'fill="{th["dark_card"]}"/>'
-        f'<rect x="{rx + 24}" y="{card_y + 24}" width="12" height="12" rx="6" fill="{th["ok"]}"/>'
+        f'<rect x="{rx}" y="{card_y}" width="{rw}" height="{card_h}" rx="22" fill="{th["dark_card"]}"/>'
+        f'<circle cx="{rx + 30}" cy="{card_y + 30}" r="6" fill="{th["ok"]}">'
+        f'<animate attributeName="opacity" values="1;0.38;1" dur="2.2s" repeatCount="indefinite"/>'
+        f'</circle>'
         f'<text x="{rx + 46}" y="{card_y + 37}" font-size="22" font-weight="700" '
         f'fill="{th["dark_text"]}" font-family=\'{FONT_STACK}\'>{escape(right.get("tag", "新方式"))}</text>'
-        f'{fade_up(0.46, 0.55, 18)}</g>'
+        f'{loop_fade_up(0.5, 0.55, 18)}</g>'
     )
-    els.append(draw_line(rx + 24, card_y + 60, rx + rw - 24, card_y + 60, "#3A3A3F", 1, 0.62, 0.45))
+    els.append(loop_draw_line(rx + 24, card_y + 60, rx + rw - 24, card_y + 60, "#3A3A3F", 1, 0.66, 0.5))
 
     for i, item in enumerate(r_items):
         iy = card_y + 104 + i * row_h
-        t = 0.72 + i * 0.14
-        check = (
-            f'<path d="M{rx + 26} {iy - 8} L{rx + 32} {iy - 2} L{rx + 43} {iy - 14}" '
-            f'fill="none" stroke="{th["ok"]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" '
-            f'stroke-dasharray="28" stroke-dashoffset="28">'
-            f'<animate attributeName="stroke-dashoffset" values="28;0" begin="{n(t + 0.1)}s" dur="0.35s" fill="freeze" {EASE}/>'
-            f'</path>'
+        fs = fit_font_size(item, 22, rw - 76)
+        t = 0.78 + i * 0.16
+        check = loop_draw_path(
+            f"M{rx + 24} {iy - 8} L{rx + 30} {iy - 2} L{rx + 41} {iy - 14}",
+            th["ok"], 2.5, 28, t + 0.1, 0.36
         )
         els.append(
             f'<g opacity="0">'
-            f'<text x="{rx + 56}" y="{iy}" font-size="23" font-weight="600" '
+            f'<text x="{rx + 52}" y="{iy}" font-size="{n(fs)}" font-weight="600" '
             f'fill="{th["dark_text"]}" font-family=\'{FONT_STACK}\'>{escape(item)}</text>'
-            f'{fade_up(t, 0.45, 10)}</g>{check}'
+            f'{loop_fade_up(t, 0.45, 10)}</g>{check}'
         )
 
     return wrap_section("".join(els), h, th["bg"])
 
 
-# ---------- 3. flow-strip ----------
+# ---------- 3. flow-strip（9 秒周期：轨道绘制 + 步骤卡逐个长出 + 蓝点沿线流转） ----------
 
 def render_flow_strip(mod, th):
     kicker = escape(mod.get("kicker", ""))
@@ -300,28 +368,31 @@ def render_flow_strip(mod, th):
     if kicker:
         els.append(
             f'<g opacity="0"><text x="48" y="64" font-size="21" font-weight="600" letter-spacing="1.6" '
-            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{fade_up(0.05, 0.45, 10)}</g>'
+            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{loop_fade_up(0.06, 0.45, 10)}</g>'
         )
     els.append(
         f'<g opacity="0"><text x="48" y="114" font-size="36" font-weight="700" letter-spacing="-0.8" '
-        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{fade_up(0.14, 0.5, 14)}</g>'
+        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{loop_fade_up(0.16, 0.55, 14)}</g>'
     )
 
     rail_x = 84
     if cnt > 1:
         y_top = start_y + 56
         y_bot = start_y + (cnt - 1) * (step_h + gap) + 56
-        els.append(draw_line(rail_x, y_top, rail_x, y_bot, th["border"], 2, 0.35, 0.85))
+        els.append(loop_draw_line(rail_x, y_top, rail_x, y_bot, th["border"], 2, 0.36, 0.95))
+        kt_dot = _kt(CYCLE, 0, 0.45, 2.1, CYCLE - 0.85, CYCLE - 0.28, CYCLE)
+        ks_dot = "0 0 1 1;0.22 1 0.36 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1"
         els.append(
-            f'<circle cx="{rail_x}" cy="{y_top}" r="5" fill="{th["accent"]}" opacity="0">'
-            f'<animate attributeName="opacity" values="0;1;1;0.9" keyTimes="0;0.1;0.9;1" begin="0.45s" dur="1.8s" fill="freeze"/>'
-            f'<animate attributeName="cy" values="{y_top};{y_bot}" begin="0.45s" dur="1.6s" fill="freeze" {EASE}/>'
+            f'<circle cx="{rail_x}" cy="{y_top}" r="6" fill="{th["accent"]}" opacity="0">'
+            f'<animate attributeName="cy" values="{y_top};{y_top};{y_bot};{y_bot};{y_bot};{y_top}" keyTimes="{kt_dot}" '
+            f'dur="{n(CYCLE)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks_dot}"/>'
+            f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt_dot}" '
+            f'dur="{n(CYCLE)}s" repeatCount="indefinite" calcMode="spline" keySplines="{ks_dot}"/>'
             f'</circle>'
         )
 
     for i, st in enumerate(steps):
         sy = start_y + i * (step_h + gap)
-        t = 0.28 + i * 0.28
         num = escape(str(st.get("num", f"0{i + 1}")))
         st_title = escape(st.get("title", ""))
         st_desc = escape(st.get("desc", ""))
@@ -341,20 +412,20 @@ def render_flow_strip(mod, th):
             f'<circle cx="{rail_x}" cy="{sy + 56}" r="24" fill="{badge_bg}" stroke="{badge_stroke}" stroke-width="1.5"/>'
             f'<text x="{rail_x}" y="{sy + 63}" text-anchor="middle" font-size="18" font-weight="700" '
             f'fill="{badge_fg}" font-family=\'{MONO_STACK}\'>{num}</text>'
-            f'{fade_up(t, 0.55, 16)}</g>'
+            f'{loop_fade_up(0.32 + i * 0.32, 0.55, 16)}</g>'
         )
 
     if footnote:
         els.append(
             f'<g opacity="0"><text x="48" y="{h - 24}" font-size="20" font-weight="500" '
             f'fill="{th["muted"]}" font-family=\'{FONT_STACK}\'>{footnote}</text>'
-            f'{fade_in(0.4 + cnt * 0.28, 0.5)}</g>'
+            f'{loop_fade_in(0.5 + cnt * 0.32, 0.5)}</g>'
         )
 
     return wrap_section("".join(els), h, th["bg"])
 
 
-# ---------- 4. bento-grid ----------
+# ---------- 4. bento-grid（9 秒周期：Bento 卡片错峰从 0→1 浮起 + 呼吸状态点） ----------
 
 def render_bento_grid(mod, th):
     kicker = escape(mod.get("kicker", ""))
@@ -372,11 +443,11 @@ def render_bento_grid(mod, th):
     if kicker:
         els.append(
             f'<g opacity="0"><text x="48" y="64" font-size="21" font-weight="600" letter-spacing="1.6" '
-            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{fade_up(0.05, 0.45, 10)}</g>'
+            f'fill="{th["accent"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>{loop_fade_up(0.06, 0.45, 10)}</g>'
         )
     els.append(
         f'<g opacity="0"><text x="48" y="114" font-size="36" font-weight="700" letter-spacing="-0.8" '
-        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{fade_up(0.14, 0.5, 14)}</g>'
+        f'fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{title}</text>{loop_fade_up(0.16, 0.55, 14)}</g>'
     )
 
     boxes = []
@@ -401,7 +472,6 @@ def render_bento_grid(mod, th):
         h = start_y + card_h + 44
 
     for i, (c, (bx, by, bw, bh)) in enumerate(zip(cards, boxes)):
-        t = 0.28 + i * 0.16
         is_dark = bool(c.get("highlight"))
         bg = th["dark_card"] if is_dark else th["card"]
         fg = th["dark_text"] if is_dark else th["text"]
@@ -414,10 +484,17 @@ def render_bento_grid(mod, th):
         desc_lines = wrap_lines(c.get("desc", ""), 38 if bw > 400 else 20)[:2]
         val_size = 40 if len(val) <= 6 else (32 if len(val) <= 10 else 26)
 
+        pulse_dot = (
+            f'<circle cx="{bx + bw - 32}" cy="{by + 36}" r="5" fill="{th["accent"]}">'
+            f'<animate attributeName="opacity" values="1;0.3;1" begin="{n(i * 0.6)}s" dur="2.6s" repeatCount="indefinite"/>'
+            f'</circle>'
+        )
+
         els.append(
             f'<g opacity="0">'
             f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="24" '
             f'fill="{bg}" stroke="{stroke}" stroke-width="1"/>'
+            f'{pulse_dot}'
             f'<text x="{bx + 28}" y="{by + 44}" font-size="19" font-weight="600" letter-spacing="1" '
             f'fill="{lbl_fg}" font-family=\'{FONT_STACK}\'>{label}</text>'
             f'<text x="{bx + 28}" y="{by + 104}" font-size="{val_size}" font-weight="700" letter-spacing="-0.8" '
@@ -427,13 +504,13 @@ def render_bento_grid(mod, th):
                 f'fill="{sub_fg}" font-family=\'{FONT_STACK}\'>{escape(dl)}</text>'
                 for j, dl in enumerate(desc_lines)
             )
-            + f'{fade_up(t, 0.55, 16)}</g>'
+            + f'{loop_fade_up(0.32 + i * 0.24, 0.55, 18)}</g>'
         )
 
     return wrap_section("".join(els), h, th["bg"])
 
 
-# ---------- 5. quote-seal ----------
+# ---------- 5. quote-seal（9 秒周期：短线展开 + 金句逐行浮现落版） ----------
 
 def render_quote_seal(mod, th):
     kicker = escape(mod.get("kicker", ""))
@@ -444,13 +521,13 @@ def render_quote_seal(mod, th):
     h = 240 + len(quote_lines) * 48 + (42 if subquote else 0)
     els = []
 
-    els.append(draw_line(345, 58, 405, 58, th["accent"], 3, 0.1, 0.5))
+    els.append(loop_draw_line(342, 58, 408, 58, th["accent"], 3, 0.08, 0.55))
 
     if kicker:
         els.append(
             f'<g opacity="0"><text x="375" y="102" text-anchor="middle" font-size="20" font-weight="600" '
             f'letter-spacing="2" fill="{th["muted"]}" font-family=\'{FONT_STACK}\'>{kicker}</text>'
-            f'{fade_in(0.22, 0.45)}</g>'
+            f'{loop_fade_in(0.24, 0.45)}</g>'
         )
 
     qy = 158 if kicker else 136
@@ -458,7 +535,7 @@ def render_quote_seal(mod, th):
         els.append(
             f'<g opacity="0"><text x="375" y="{qy + i * 50}" text-anchor="middle" font-size="36" font-weight="700" '
             f'letter-spacing="-0.5" fill="{th["text"]}" font-family=\'{FONT_STACK}\'>{escape(line)}</text>'
-            f'{fade_up(0.32 + i * 0.16, 0.55, 14)}</g>'
+            f'{loop_fade_up(0.38 + i * 0.18, 0.55, 16)}</g>'
         )
 
     cur_y = qy + len(quote_lines) * 50 + 10
@@ -466,7 +543,7 @@ def render_quote_seal(mod, th):
         els.append(
             f'<g opacity="0"><text x="375" y="{cur_y}" text-anchor="middle" font-size="22" font-weight="400" '
             f'fill="{th["sub"]}" font-family=\'{FONT_STACK}\'>{subquote}</text>'
-            f'{fade_in(0.65, 0.5)}</g>'
+            f'{loop_fade_in(0.76, 0.5)}</g>'
         )
         cur_y += 42
 
@@ -474,7 +551,7 @@ def render_quote_seal(mod, th):
         els.append(
             f'<g opacity="0"><text x="375" y="{cur_y + 12}" text-anchor="middle" font-size="19" font-weight="600" '
             f'letter-spacing="1.2" fill="{th["muted"]}" font-family=\'{FONT_STACK}\'>{author}</text>'
-            f'{fade_in(0.8, 0.5)}</g>'
+            f'{loop_fade_in(0.95, 0.5)}</g>'
         )
 
     return wrap_section("".join(els), h, th["bg"])
@@ -686,15 +763,15 @@ def compose_article_html(md_text, packed_modules):
         if line.startswith("## "):
             title_txt = render_inline_md(line[3:].strip())
             blocks.append(
-                f'<h2 style="margin:36px 0 14px;font-size:20px;font-weight:700;'
-                f'line-height:1.4;color:#1D1D1F;letter-spacing:-0.3px;">{title_txt}</h2>'
+                f'<h2 data-feis-h2="1" style="margin:36px 0 16px;font-size:19px;font-weight:700;'
+                f'line-height:1.4;color:#1D1D1F;letter-spacing:0px;">{title_txt}</h2>'
             )
             continue
 
         if line.startswith("### "):
             title_txt = render_inline_md(line[4:].strip())
             blocks.append(
-                f'<h3 style="margin:26px 0 10px;font-size:17px;font-weight:700;'
+                f'<h3 style="margin:26px 0 12px;font-size:16px;font-weight:700;'
                 f'line-height:1.45;color:#1D1D1F;">{title_txt}</h3>'
             )
             continue
@@ -702,15 +779,15 @@ def compose_article_html(md_text, packed_modules):
         if line.startswith("> "):
             quote_txt = render_inline_md(line[2:].strip())
             blocks.append(
-                f'<section style="margin:22px 0;padding:14px 18px;border-left:3px solid #0071E3;'
+                f'<section style="margin:24px 0;padding:14px 18px;border-left:3px solid #0071E3;'
                 f'background-color:#F5F5F7;border-radius:0 12px 12px 0;font-size:15px;'
                 f'line-height:1.8;color:#424245;">{quote_txt}</section>'
             )
             continue
 
         blocks.append(
-            f'<p style="margin:0 0 20px;font-size:16px;line-height:1.85;'
-            f'letter-spacing:0.03em;color:#2C2C2E;">{render_inline_md(line)}</p>'
+            f'<p data-feis-p="1" style="margin:0 0 24px;font-size:15px;line-height:1.8;'
+            f'letter-spacing:0px;color:#2C2C2E;text-align:left;">{render_inline_md(line)}</p>'
         )
 
     # 未在正文里显式占位的模块自动追加在文末
@@ -719,8 +796,8 @@ def compose_article_html(md_text, packed_modules):
             blocks.append(mod["html"])
 
     return (
-        f'<section style="padding:8px 4px;font-family:{FONT_STACK};'
-        f'background-color:#FFFFFF;color:#1D1D1F;">'
+        f'<section data-feis-article="1" style="padding:12px 18px;font-family:{FONT_STACK};'
+        f'background-color:#FFFFFF;color:#2C2C2E;box-sizing:border-box;">'
         f'{"".join(blocks)}</section>'
     )
 

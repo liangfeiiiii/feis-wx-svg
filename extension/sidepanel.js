@@ -1,7 +1,7 @@
 // 非叔 SVG 助手 · Side Panel 核心交互与状态管理（V1.1 整篇一键复制 + 内置示例画廊）
 
 (() => {
-  const STORAGE_KEY = "feis_wx_svg_state_v2";
+  const STORAGE_KEY = "feis_wx_svg_state_v3";
 
   const FORBIDDEN_RULES = [
     { name: "id 属性", regex: /\bid\s*=\s*["'][^"']*["']/gi },
@@ -14,7 +14,17 @@
     { name: "script 脚本", regex: /<script\b[\s\S]*?<\/script>/gi }
   ];
 
+  const DEFAULT_TYPO = {
+    paddingX: 18,
+    fontSize: 15,
+    lineHeight: 1.8,
+    paraGap: 24,
+    letterSpacing: 0,
+    headingStyle: "minimal" // minimal | bar | underline | dot
+  };
+
   const state = {
+    sampleKey: "",
     packTitle: "",
     articleHtml: "",
     articleLint: null,
@@ -24,6 +34,8 @@
     wechatReady: false,
     activeTabId: null,
     galleryOpen: false,
+    typoOpen: false,
+    typo: { ...DEFAULT_TYPO },
     clearArmTimer: null,
     toastTimer: null
   };
@@ -49,6 +61,21 @@
   const $btnPickFile = document.getElementById("btnPickFile");
   const $btnFromClipboard = document.getElementById("btnFromClipboard");
   const $btnReplayAll = document.getElementById("btnReplayAll");
+  const $btnToggleTypo = document.getElementById("btnToggleTypo");
+  const $btnTypoReset = document.getElementById("btnTypoReset");
+  const $typoSummary = document.getElementById("typoSummary");
+  const $slPaddingX = document.getElementById("slPaddingX");
+  const $slFontSize = document.getElementById("slFontSize");
+  const $slLineHeight = document.getElementById("slLineHeight");
+  const $slParaGap = document.getElementById("slParaGap");
+  const $slLetterSpacing = document.getElementById("slLetterSpacing");
+  const $valPaddingX = document.getElementById("valPaddingX");
+  const $valFontSize = document.getElementById("valFontSize");
+  const $valLineHeight = document.getElementById("valLineHeight");
+  const $valParaGap = document.getElementById("valParaGap");
+  const $valLetterSpacing = document.getElementById("valLetterSpacing");
+  const $headingPills = Array.from(document.querySelectorAll(".h-pill"));
+  const $phoneNavTitle = document.getElementById("phoneNavTitle");
   const $btnAddMore = document.getElementById("btnAddMore");
   const $btnClear = document.getElementById("btnClear");
   const $toast = document.getElementById("toast");
@@ -115,17 +142,221 @@
     }, duration);
   }
 
+  // ---------- 排版参数与极简小标题风格烘焙（所见即所得，100% 微信内联安全） ----------
+
+  function applyTypographyToHtml(rawHtml, typo, stripDataAttrs = false) {
+    if (!rawHtml) return "";
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${rawHtml}</div>`, "text/html");
+    const root = doc.body.firstElementChild;
+    if (!root) return rawHtml;
+
+    const container = root.querySelector("[data-feis-article]") || root.firstElementChild;
+    if (container && container.tagName === "SECTION") {
+      container.style.padding = `12px ${typo.paddingX}px`;
+      container.style.boxSizing = "border-box";
+      if (stripDataAttrs) container.removeAttribute("data-feis-article");
+    }
+
+    root.querySelectorAll("p").forEach((p) => {
+      p.style.fontSize = `${typo.fontSize}px`;
+      p.style.lineHeight = String(typo.lineHeight);
+      p.style.margin = `0 0 ${typo.paraGap}px`;
+      p.style.letterSpacing = `${typo.letterSpacing}px`;
+      p.style.textAlign = "left";
+      if (stripDataAttrs) p.removeAttribute("data-feis-p");
+    });
+
+    root.querySelectorAll("h2").forEach((h2) => {
+      const text = h2.textContent.trim();
+      const baseTop = Math.max(28, typo.paraGap + 12);
+      h2.style.margin = `${baseTop}px 0 16px`;
+      h2.style.fontSize = `${typo.fontSize + 4}px`;
+      h2.style.fontWeight = "700";
+      h2.style.lineHeight = "1.4";
+      h2.style.color = "#1D1D1F";
+      h2.style.letterSpacing = `${typo.letterSpacing}px`;
+      h2.style.borderLeft = "";
+      h2.style.paddingLeft = "";
+      h2.style.paddingBottom = "";
+      h2.style.borderBottom = "";
+
+      if (typo.headingStyle === "bar") {
+        h2.style.borderLeft = "3px solid #0071E3";
+        h2.style.paddingLeft = "10px";
+        h2.textContent = text;
+      } else if (typo.headingStyle === "underline") {
+        h2.innerHTML = `<span style="display:inline-block;padding-bottom:6px;border-bottom:2.5px solid #0071E3;">${escapeHtml(text)}</span>`;
+      } else if (typo.headingStyle === "dot") {
+        h2.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:99px;background-color:#0071E3;margin-right:8px;vertical-align:middle;"></span><span style="vertical-align:middle;">${escapeHtml(text)}</span>`;
+      } else {
+        h2.textContent = text;
+      }
+
+      if (stripDataAttrs) h2.removeAttribute("data-feis-h2");
+    });
+
+    return root.innerHTML;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ---------- 原生 Markdown → 微信安全苹果风排版 HTML ----------
+
+  function renderInlineMd(text) {
+    let s = escapeHtml(text);
+    s = s.replace(
+      /`([^`]+)`/g,
+      '<code style="padding:2px 6px;border-radius:6px;background-color:#F2F2F5;color:#1D1D1F;font-size:13px;font-family:Menlo,Consolas,monospace;">$1</code>'
+    );
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight:700;color:#1D1D1F;">$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em style="font-style:italic;">$1</em>');
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<span style="color:#0071E3;">$1</span>');
+    return s;
+  }
+
+  function parseMarkdownToWechatHtml(mdRaw, fallbackTitle = "Markdown 文章") {
+    // 剥离 Obsidian / YAML frontmatter
+    let text = (mdRaw || "").replace(/^\uFEFF/, "").replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "");
+    const lines = text.split(/\r?\n/);
+    let detectedTitle = "";
+    const blocks = [];
+    let inCode = false;
+    let codeBuf = [];
+
+    for (const rawLine of lines) {
+      const trimmed = rawLine.trim();
+
+      if (trimmed.startsWith("```")) {
+        if (!inCode) {
+          inCode = true;
+          codeBuf = [];
+        } else {
+          inCode = false;
+          const codeHtml = escapeHtml(codeBuf.join("\n"));
+          blocks.push(
+            `<section style="margin:20px 0;padding:14px 16px;border-radius:12px;background-color:#F5F5F7;border:1px solid #E5E5EA;font-family:Menlo,Consolas,monospace;font-size:12.5px;line-height:1.65;color:#1D1D1F;white-space:pre-wrap;word-break:break-word;">${codeHtml}</section>`
+          );
+        }
+        continue;
+      }
+
+      if (inCode) {
+        codeBuf.push(rawLine);
+        continue;
+      }
+
+      if (!trimmed) continue;
+
+      // 跳过 Obsidian 本地图片语法 ![[...]] 并给出轻提示占位，避免乱码
+      if (/^!\[\[[^\]]+\]\]$/.test(trimmed)) continue;
+
+      if (trimmed.startsWith("# ")) {
+        if (!detectedTitle) detectedTitle = trimmed.slice(2).trim();
+        continue;
+      }
+
+      if (trimmed.startsWith("## ")) {
+        blocks.push(
+          `<h2 data-feis-h2="1" style="margin:36px 0 16px;font-size:19px;font-weight:700;line-height:1.4;color:#1D1D1F;letter-spacing:0px;">${renderInlineMd(trimmed.slice(3).trim())}</h2>`
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith("### ")) {
+        blocks.push(
+          `<h3 style="margin:26px 0 12px;font-size:16px;font-weight:700;line-height:1.45;color:#1D1D1F;">${renderInlineMd(trimmed.slice(4).trim())}</h3>`
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith("> ")) {
+        blocks.push(
+          `<section style="margin:22px 0;padding:14px 18px;border-left:3px solid #0071E3;background-color:#F5F5F7;border-radius:0 12px 12px 0;font-size:14.5px;line-height:1.8;color:#424245;">${renderInlineMd(trimmed.slice(2).trim())}</section>`
+        );
+        continue;
+      }
+
+      if (/^[-*+]\s+/.test(trimmed)) {
+        const itemTxt = trimmed.replace(/^[-*+]\s+/, "");
+        blocks.push(
+          `<p data-feis-p="1" style="margin:0 0 14px;font-size:15px;line-height:1.8;color:#2C2C2E;text-align:left;">• ${renderInlineMd(itemTxt)}</p>`
+        );
+        continue;
+      }
+
+      if (/^---+$/.test(trimmed)) {
+        blocks.push('<section style="margin:28px auto;width:48px;height:1px;background-color:#D1D1D6;"></section>');
+        continue;
+      }
+
+      blocks.push(
+        `<p data-feis-p="1" style="margin:0 0 24px;font-size:15px;line-height:1.8;letter-spacing:0px;color:#2C2C2E;text-align:left;">${renderInlineMd(trimmed)}</p>`
+      );
+    }
+
+    const html = `<section data-feis-article="1" style="padding:12px 18px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Helvetica Neue',sans-serif;background-color:#FFFFFF;color:#2C2C2E;box-sizing:border-box;">${blocks.join("")}</section>`;
+    return {
+      title: detectedTitle || fallbackTitle,
+      html
+    };
+  }
+
+  function updateSliderTrack(sl) {
+    const min = Number(sl.min);
+    const max = Number(sl.max);
+    const val = Number(sl.value);
+    const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+    sl.style.setProperty("--pct", `${pct}%`);
+  }
+
+  function syncTypoUI() {
+    const t = state.typo;
+    $slPaddingX.value = t.paddingX;
+    $slFontSize.value = t.fontSize;
+    $slLineHeight.value = t.lineHeight;
+    $slParaGap.value = t.paraGap;
+    $slLetterSpacing.value = t.letterSpacing;
+
+    [$slPaddingX, $slFontSize, $slLineHeight, $slParaGap, $slLetterSpacing].forEach(updateSliderTrack);
+
+    $valPaddingX.textContent = `${t.paddingX}px`;
+    $valFontSize.textContent = `${t.fontSize}px`;
+    $valLineHeight.textContent = String(t.lineHeight);
+    $valParaGap.textContent = String(t.paraGap);
+    $valLetterSpacing.textContent = String(t.letterSpacing);
+    $typoSummary.textContent = `留白 ${t.paddingX} · 行距 ${t.lineHeight} · 段距 ${t.paraGap} · 字距 ${t.letterSpacing}`;
+
+    $headingPills.forEach((btn) => {
+      btn.setAttribute("aria-checked", btn.dataset.style === t.headingStyle ? "true" : "false");
+    });
+  }
+
+  function setTypoOpen(open) {
+    state.typoOpen = Boolean(open);
+    $app.dataset.typoOpen = state.typoOpen ? "true" : "false";
+    $btnToggleTypo.setAttribute("aria-expanded", state.typoOpen ? "true" : "false");
+  }
+
   // ---------- 持久化存储 ----------
 
   function saveState() {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set({
         [STORAGE_KEY]: {
+          sampleKey: state.sampleKey,
           packTitle: state.packTitle,
           articleHtml: state.articleHtml,
           modules: state.modules,
           view: state.view,
-          previewBg: state.previewBg
+          previewBg: state.previewBg,
+          typo: state.typo
         }
       });
     }
@@ -136,7 +367,21 @@
     try {
       const data = await chrome.storage.local.get(STORAGE_KEY);
       const saved = data[STORAGE_KEY];
+      if (saved && saved.typo) {
+        state.typo = { ...DEFAULT_TYPO, ...saved.typo };
+        syncTypoUI();
+      }
+      if (saved && saved.sampleKey && Array.isArray(window.FEIS_BUILTIN_SAMPLES)) {
+        const fresh = window.FEIS_BUILTIN_SAMPLES.find((s) => s.sampleKey === saved.sampleKey);
+        if (fresh) {
+          applyPreviewBg(saved.previewBg === "dark" ? "dark" : "light", false);
+          loadPackObject(fresh, "");
+          applyView(saved.view === "modules" ? "modules" : "article", false);
+          return;
+        }
+      }
       if (saved && (saved.articleHtml || (Array.isArray(saved.modules) && saved.modules.length > 0))) {
+        state.sampleKey = "";
         state.packTitle = saved.packTitle || "已导入内容";
         state.articleHtml = saved.articleHtml || "";
         state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
@@ -161,8 +406,8 @@
 
     if ($btnWholeAction.dataset.state !== "success") {
       $btnWholeAction.querySelector(".act-label").textContent = state.wechatReady
-        ? "一键插入整篇文章"
-        : "一键复制整篇文章";
+        ? "一键插入整篇"
+        : "一键复制整篇";
     }
     document.querySelectorAll(".mod-card .act-primary").forEach((btn) => {
       if (btn.dataset.state !== "success") {
@@ -261,7 +506,7 @@
     const labelEl = buttonEl.querySelector(".act-label");
     const iconEl = buttonEl.querySelector(".act-icon");
     const prevIdleLabel = buttonEl === $btnWholeAction
-      ? (state.wechatReady ? "一键插入整篇文章" : "一键复制整篇文章")
+      ? (state.wechatReady ? "一键插入整篇" : "一键复制整篇")
       : (state.wechatReady ? "插入光标处" : "复制到公众号");
 
     buttonEl.dataset.state = "success";
@@ -285,6 +530,7 @@
   // ---------- 载入整包数据（支持用户文件与内置示例） ----------
 
   function loadPackObject(pack, toastLabel = "") {
+    state.sampleKey = pack.sampleKey || "";
     state.packTitle = pack.title || "未命名文章";
     state.articleHtml = pack.articleHtml || "";
     state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
@@ -320,7 +566,12 @@
       const text = await file.text();
       const lower = file.name.toLowerCase();
 
-      if (lower.endsWith(".json")) {
+      if (lower.endsWith(".md") || lower.endsWith(".markdown")) {
+        const fallbackName = file.name.replace(/\.(md|markdown)$/i, "");
+        const parsedMd = parseMarkdownToWechatHtml(text, fallbackName);
+        importedWholeHtml = parsedMd.html;
+        importedWholeTitle = parsedMd.title;
+      } else if (lower.endsWith(".json")) {
         try {
           const parsed = JSON.parse(text);
           if (parsed.articleHtml || Array.isArray(parsed.modules)) {
@@ -357,6 +608,7 @@
     }
 
     if (importedWholeHtml) {
+      state.sampleKey = "";
       state.packTitle = importedWholeTitle || "完整文章";
       state.articleHtml = importedWholeHtml;
       state.articleLint = lintHtml(importedWholeHtml);
@@ -364,7 +616,7 @@
       applyView("article", false);
       saveState();
       render();
-      showToast(`已导入完整文章「${state.packTitle}」`);
+      showToast(`已导入文章「${state.packTitle}」`);
       return;
     }
 
@@ -477,6 +729,8 @@
     $articleCanvas.innerHTML = "";
     if (!state.articleHtml) return;
 
+    $phoneNavTitle.textContent = state.packTitle || "公众号预览";
+
     if (state.articleLint && !state.articleLint.ok) {
       const bar = document.createElement("div");
       bar.className = "lint-bar";
@@ -488,12 +742,12 @@
         saveState();
         bar.classList.add("is-resolved");
         setTimeout(() => bar.remove(), 220);
-        $articleCanvas.innerHTML = state.articleHtml;
+        $articleCanvas.innerHTML = applyTypographyToHtml(state.articleHtml, state.typo, false);
         showToast("已净化整篇文章，现已符合微信规则");
       };
       $articleLintSlot.appendChild(bar);
     }
-    $articleCanvas.innerHTML = state.articleHtml;
+    $articleCanvas.innerHTML = applyTypographyToHtml(state.articleHtml, state.typo, false);
   }
 
   function render() {
@@ -666,13 +920,19 @@
 
   // ---------- 事件绑定 ----------
 
-  $btnToggleGallery.onclick = () => setGalleryOpen(!state.galleryOpen);
+  // 两个抽屉互斥展开（展开示例库时自动收起排版，避免顶部过高挤占预览视口）
+  $btnToggleGallery.onclick = () => {
+    const next = !state.galleryOpen;
+    if (next) setTypoOpen(false);
+    setGalleryOpen(next);
+  };
   $btnCloseGallery.onclick = () => setGalleryOpen(false);
 
   $btnWholeAction.onclick = () => {
     if (!state.articleHtml) return;
+    const baked = applyTypographyToHtml(state.articleHtml, state.typo, true);
     deliverHtml({
-      html: state.articleHtml,
+      html: baked,
       label: state.packTitle || "整篇文章",
       buttonEl: $btnWholeAction,
       forceCopyOnly: false
@@ -681,12 +941,78 @@
 
   $btnWholeCopyOnly.onclick = () => {
     if (!state.articleHtml) return;
+    const baked = applyTypographyToHtml(state.articleHtml, state.typo, true);
     deliverHtml({
-      html: state.articleHtml,
+      html: baked,
       label: state.packTitle || "整篇文章",
       buttonEl: $btnWholeAction,
       forceCopyOnly: true
     });
+  };
+
+  // 排版滑块与极简标题风格实时跟手响应（展开排版时自动收起示例库）
+  $btnToggleTypo.onclick = () => {
+    const next = !state.typoOpen;
+    if (next) setGalleryOpen(false);
+    setTypoOpen(next);
+  };
+
+  function applyTypographyInPlace(rootEl, typo) {
+    if (!rootEl) return;
+    const container = rootEl.querySelector("[data-feis-article]") || rootEl.firstElementChild;
+    if (container && container.tagName === "SECTION") {
+      container.style.padding = `12px ${typo.paddingX}px`;
+    }
+    rootEl.querySelectorAll("p").forEach((p) => {
+      p.style.fontSize = `${typo.fontSize}px`;
+      p.style.lineHeight = String(typo.lineHeight);
+      p.style.margin = `0 0 ${typo.paraGap}px`;
+      p.style.letterSpacing = `${typo.letterSpacing}px`;
+    });
+    rootEl.querySelectorAll("h2").forEach((h2) => {
+      const baseTop = Math.max(28, typo.paraGap + 12);
+      h2.style.margin = `${baseTop}px 0 16px`;
+      h2.style.fontSize = `${typo.fontSize + 4}px`;
+      h2.style.letterSpacing = `${typo.letterSpacing}px`;
+    });
+  }
+
+  function onTypoChanged() {
+    state.typo.paddingX = Number($slPaddingX.value);
+    state.typo.fontSize = Number($slFontSize.value);
+    state.typo.lineHeight = Number($slLineHeight.value);
+    state.typo.paraGap = Number($slParaGap.value);
+    state.typo.letterSpacing = Number($slLetterSpacing.value);
+    syncTypoUI();
+    if (state.articleHtml) {
+      applyTypographyInPlace($articleCanvas, state.typo);
+    }
+    saveState();
+  }
+
+  [$slPaddingX, $slFontSize, $slLineHeight, $slParaGap, $slLetterSpacing].forEach((sl) => {
+    sl.addEventListener("input", onTypoChanged);
+  });
+
+  $headingPills.forEach((btn) => {
+    btn.onclick = () => {
+      state.typo.headingStyle = btn.dataset.style;
+      syncTypoUI();
+      if (state.articleHtml) {
+        $articleCanvas.innerHTML = applyTypographyToHtml(state.articleHtml, state.typo, false);
+      }
+      saveState();
+    };
+  });
+
+  $btnTypoReset.onclick = () => {
+    state.typo = { ...DEFAULT_TYPO };
+    syncTypoUI();
+    if (state.articleHtml) {
+      $articleCanvas.innerHTML = applyTypographyToHtml(state.articleHtml, state.typo, false);
+    }
+    saveState();
+    showToast("已恢复默认排版参数");
   };
 
   $btnPickFile.onclick = (e) => {
@@ -724,7 +1050,7 @@
     if (state.view === "article" && state.articleHtml) {
       $articleCanvas.innerHTML = "";
       requestAnimationFrame(() => {
-        $articleCanvas.innerHTML = state.articleHtml;
+        $articleCanvas.innerHTML = applyTypographyToHtml(state.articleHtml, state.typo, false);
       });
       return;
     }
@@ -818,6 +1144,7 @@
   });
 
   // 初始化
+  syncTypoUI();
   renderGalleryCards($emptyGalleryList);
   renderGalleryCards($galleryDrawerList);
   restoreState();
