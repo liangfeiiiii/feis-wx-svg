@@ -17,7 +17,7 @@
 正文照常排版，只在关键节点插入轻巧克制的纯 SVG 动效与互动卡片，无视频、无 GIF、无 JS。
 所有数据与文件全在本机处理，不经过任何外部服务器。
 
-[示例画廊](#示例画廊) · [插件预览](#插件预览) · [为什么做这个](#为什么做这个) · [快速开始](#快速开始) · [AI 技能用法](#ai-技能用法) · [项目结构](#项目结构) · [许可证](#许可证)
+[示例画廊](#示例画廊) · [插件预览](#插件预览) · [交给 AI Agent（推荐）](#交给-ai-agent推荐) · [为什么做这个](#为什么做这个) · [手动运行](#手动运行) · [项目结构](#项目结构) · [许可证](#许可证)
 
 </div>
 
@@ -61,42 +61,57 @@
 
 ---
 
-## 快速开始
+## 交给 AI Agent（推荐）
 
-### 1. 下载仓库
+不用手敲命令，也不用自己改 JSON。支持 **Antigravity、Claude Code、Cursor、Codex** 等任意 AI Agent，直接复制下面两句话发给它就行。
 
-```bash
-git clone https://github.com/liangfeiiiii/feis-wx-svg.git
-cd feis-wx-svg
+### 第一步：让 Agent 自动下载并安装 SKILL
+
+把下面这句话直接发给你的 AI Agent：
+
+```text
+帮我克隆 https://github.com/liangfeiiiii/feis-wx-svg 到本地，阅读根目录的 SKILL.md，并把它安装配置成你自己的本地技能 feis-wx-svg。装完告诉我 Chrome 插件 extension/ 文件夹的本地路径。
 ```
 
-### 2. 加载 Chrome 插件（30 秒）
+### 第二步：直接派活，让它帮你排一篇公众号文章
 
-地址栏输入 `chrome://extensions` 回车，打开右上角的**开发者模式**，点**加载已解压的扩展程序**，选中仓库里的 `extension/` 文件夹。
+装好之后，把你的草稿或者主题丢给它，直接套用下面任意一句实战指令：
 
-点击浏览器工具栏上的「非叔 SVG 助手」图标滑出侧边栏。不用跑任何命令，点顶栏的 **「示例库」** 就能直接体验内置 3 套样板，也可以直接把本地 `.md` 文章拖进去排版并一键复制到公众号。
+**场景 1：手上已有文章，直接升级成苹果风 SVG 混排**
 
-### 3. 生成新文章模块包
+```text
+用 feis-wx-svg 帮我把这篇文章做成公众号混排：[贴上你的文章路径或正文]。保持正文原生排版，在关键观点处插 3 个苹果风 SVG 模块（1 个双栏对比、1 个横向滑动画廊、1 个点击揭晓），生成 feis-pack.json 给我。
+```
+
+**场景 2：只有零散要点，让它从写稿到动效一次出完**
+
+```text
+用 feis-wx-svg 帮我做一篇介绍 [你的产品或方法论] 的公众号文章，挑 4 个最贴合内容的苹果风 SVG 动效模块，生成可直接拖进 Chrome 插件的 feis-pack.json。
+```
+
+### 第三步：用 Chrome 插件一键发进公众号
+
+1. Chrome 地址栏输入 `chrome://extensions` 回车，打开右上角**开发者模式**，点**加载已解压的扩展程序**，选中刚才 Agent 给你的 `extension/` 文件夹。
+2. 点击浏览器工具栏上的「非叔 SVG 助手」打开侧边栏（点顶栏「示例库」可直接体验内置 3 套样板）。
+3. 把 Agent 生成的 `feis-pack.json`（或任意 `.md` 文章）拖进侧边栏，在真实 iPhone 16 Pro 样机里微调两侧留白和标题风格，点**「一键复制整篇」**或**「一键插入整篇」**直接进公众号编辑器。
+
+---
+
+## 手动运行
+
+如果你想自己跑命令行或二次开发：
 
 ```bash
+# 克隆仓库
+git clone https://github.com/liangfeiiiii/feis-wx-svg.git
+cd feis-wx-svg
+
 # 编译单篇文章（输出完整 article.html、preview.html 与 feis-pack.json）
 python3 engine/apple_modules.py samples/01-intro-feis-wx-svg/modules.json -o samples/01-intro-feis-wx-svg/dist
 
 # 一键重编所有示例并同步更新插件内置示例库
 python3 engine/build_samples.py
 ```
-
----
-
-## AI 技能用法
-
-本仓库根目录自带完整规范的 [SKILL.md](SKILL.md)，支持 Antigravity、Claude Code、Cursor、Codex 等 AI Agent 直接使用。
-
-把仓库里的 `SKILL.md` 放到你的 AI Agent 技能目录（例如 `~/.gemini/config/skills/feis-wx-svg/SKILL.md`），以后只要直接跟 AI 说：
-
-> 用 feis-wx-svg 帮我把这篇文章做成公众号苹果风 SVG 混排，加上一个横滑画廊和一个点击揭晓。
-
-AI 会自动挑好组件、写出正文与配置 JSON、调用引擎编译成 `feis-pack.json`，直接拖进 Chrome 插件一键发稿即可。
 
 ---
 
