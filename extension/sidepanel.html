@@ -7,43 +7,78 @@
   <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
-  <div class="app" id="app" data-has-items="false" data-preview-bg="light" data-wechat="false">
+  <div class="app" id="app" data-has-items="false" data-has-article="false" data-view="article" data-preview-bg="light" data-wechat="false" data-gallery-open="false">
     <!-- 顶部极简导航栏 -->
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">非叔 SVG</span>
       </div>
-      <div class="status-pill" id="statusPill" data-state="offline" title="自动感知当前标签页">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="status-text" id="statusText">复制模式</span>
+      <div class="topbar-right">
+        <button class="top-chip" id="btnToggleGallery" type="button" aria-expanded="false">示例</button>
+        <div class="status-pill" id="statusPill" data-state="offline" title="自动感知当前标签页">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text" id="statusText">复制模式</span>
+        </div>
       </div>
     </header>
 
-    <!-- 工具条：仅在有模块时出现 -->
+    <!-- 内置示例画廊抽屉（随时点顶栏「示例」展开/收回） -->
+    <section class="gallery-drawer" id="galleryDrawer" aria-label="内置示例画廊">
+      <div class="gallery-drawer-head">
+        <span class="gallery-drawer-title">内置效果示例 · 点一下直接预览与复制</span>
+        <button class="remove-btn" id="btnCloseGallery" type="button" aria-label="关闭示例抽屉">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>
+          </svg>
+        </button>
+      </div>
+      <div class="gallery-list" id="galleryDrawerList"></div>
+    </section>
+
+    <!-- 工具条：仅在有内容时出现 -->
     <section class="toolbar" id="toolbar" aria-label="视图与操作控制">
       <div class="pack-meta">
-        <span class="pack-title" id="packTitle">未命名模块包</span>
+        <span class="pack-title" id="packTitle">未命名文章</span>
         <span class="pack-stat" id="packStat">0 个模块</span>
       </div>
+
+      <!-- 整篇一键直贴/复制主操作条（仅当包含整篇 HTML 时出现） -->
+      <div class="whole-action-row" id="wholeActionRow">
+        <button class="act-primary whole-btn" id="btnWholeAction" type="button" data-state="idle">
+          <span class="act-icon" aria-hidden="true"></span>
+          <span class="act-label">一键复制整篇文章</span>
+        </button>
+        <button class="act-secondary btn-copy-only" id="btnWholeCopyOnly" type="button" title="仅复制整篇到剪贴板">复制</button>
+      </div>
+
       <div class="toolbar-actions">
-        <div class="segmented" role="radiogroup" aria-label="预览底色">
+        <!-- 整篇 / 分块 视图切换（仅当有整篇时出现） -->
+        <div class="segmented view-seg" id="viewSegmented" role="radiogroup" aria-label="阅读模式">
           <span class="seg-thumb" aria-hidden="true"></span>
-          <button class="seg-btn" type="button" data-bg="light" aria-checked="true" role="radio">浅底</button>
-          <button class="seg-btn" type="button" data-bg="dark" aria-checked="false" role="radio">深底</button>
+          <button class="seg-btn view-btn" type="button" data-view="article" aria-checked="true" role="radio">整篇</button>
+          <button class="seg-btn view-btn" type="button" data-view="modules" aria-checked="false" role="radio">分块</button>
         </div>
-        <button class="icon-btn" id="btnReplayAll" type="button" title="重播全部动效" aria-label="重播全部动效">
+
+        <!-- 浅底 / 深底 预览切换 -->
+        <div class="segmented bg-seg" role="radiogroup" aria-label="预览底色">
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <button class="seg-btn bg-btn" type="button" data-bg="light" aria-checked="true" role="radio">浅底</button>
+          <button class="seg-btn bg-btn" type="button" data-bg="dark" aria-checked="false" role="radio">深底</button>
+        </div>
+
+        <button class="icon-btn" id="btnReplayAll" type="button" title="重播动效" aria-label="重播动效">
           <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16.2 10a6.2 6.2 0 1 1-1.6-4.2"/>
             <path d="M16.2 3.8v3.1h-3.1"/>
           </svg>
         </button>
-        <button class="icon-btn" id="btnAddMore" type="button" title="导入更多模块" aria-label="导入更多模块">
+        <button class="icon-btn" id="btnAddMore" type="button" title="导入文件" aria-label="导入文件">
           <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
             <path d="M10 4.5v11M4.5 10h11"/>
           </svg>
         </button>
-        <button class="danger-btn" id="btnClear" type="button" data-armed="false" title="清空当前列表">
+        <button class="danger-btn" id="btnClear" type="button" data-armed="false" title="清空当前内容">
           <span class="danger-label">清空</span>
         </button>
       </div>
@@ -51,45 +86,57 @@
 
     <!-- 主内容区 -->
     <main class="main" id="main">
-      <!-- 空态拖放区 -->
-      <section class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="拖入 feis-pack.json 或 SVG / HTML 文件">
-        <div class="dropzone-icon" aria-hidden="true">
-          <svg viewBox="0 0 40 40" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="7" y="8" width="26" height="24" rx="6"/>
-            <path d="M20 24V15"/>
-            <path d="M16 18.5L20 14.5L24 18.5"/>
-          </svg>
+      <!-- 空态：极简拖放区 + 内置示例画廊 -->
+      <section class="empty-view" id="emptyView">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="拖入 feis-pack.json 或 SVG / HTML 文件">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 40 40" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="7" y="8" width="26" height="24" rx="6"/>
+              <path d="M20 24V15"/>
+              <path d="M16 18.5L20 14.5L24 18.5"/>
+            </svg>
+          </div>
+          <h2 class="dropzone-title">拖入文章包或 SVG 文件</h2>
+          <p class="dropzone-sub">支持 feis-pack.json、完整 article.html 或单个 .svg<br>自动体检微信规则，一键整篇复制到公众号</p>
+          <div class="dropzone-actions">
+            <button class="pill-btn primary" id="btnPickFile" type="button">选择文件</button>
+            <button class="pill-btn ghost" id="btnFromClipboard" type="button">从剪贴板导入</button>
+          </div>
         </div>
-        <h2 class="dropzone-title">拖入模块包或 SVG 文件</h2>
-        <p class="dropzone-sub">支持 feis-pack.json、单模块 .html 或 .svg<br>自动体检微信规则，本地处理不上传</p>
-        <div class="dropzone-actions">
-          <button class="pill-btn primary" id="btnPickFile" type="button">选择文件</button>
-          <button class="pill-btn ghost" id="btnFromClipboard" type="button">从剪贴板导入</button>
+
+        <div class="empty-gallery">
+          <div class="empty-gallery-label">内置示例 · 点一下看效果并试贴到公众号</div>
+          <div class="gallery-list" id="emptyGalleryList"></div>
         </div>
       </section>
 
-      <!-- 模块卡片列表 -->
+      <!-- 整篇文章完整预览视图 -->
+      <section class="article-view" id="articleView" aria-live="polite">
+        <div class="article-lint-slot" id="articleLintSlot"></div>
+        <div class="article-canvas" id="articleCanvas"></div>
+      </section>
+
+      <!-- 分块模块列表视图 -->
       <section class="module-list" id="moduleList" aria-live="polite"></section>
     </main>
 
-    <!-- 全屏拖放浮层（已有模块时拖入文件） -->
+    <!-- 全屏拖放浮层 -->
     <div class="drag-overlay" id="dragOverlay" aria-hidden="true">
       <div class="drag-overlay-card">
-        <span class="drag-overlay-title">松手导入模块</span>
-        <span class="drag-overlay-sub">自动识别 feis-pack.json 或单个 SVG / HTML</span>
+        <span class="drag-overlay-title">松手导入文章或模块</span>
+        <span class="drag-overlay-sub">自动识别整篇 feis-pack.json、article.html 或单模块</span>
       </div>
     </div>
 
-    <!-- 隐藏文件选择器 -->
     <input type="file" id="fileInput" accept=".json,.html,.htm,.svg" multiple hidden>
 
-    <!-- 底部轻提示胶囊（支持带撤销） -->
     <div class="toast" id="toast" role="status" aria-live="polite">
       <span class="toast-msg" id="toastMsg"></span>
       <button class="toast-undo" id="toastUndo" type="button" hidden>撤销</button>
     </div>
   </div>
 
+  <script src="samples_bundle.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

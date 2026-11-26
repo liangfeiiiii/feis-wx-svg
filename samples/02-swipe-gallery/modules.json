@@ -1,0 +1,54 @@
+{
+  "title": "好设计都在做什么减法 · 横滑展板示例",
+  "summary": "复刻苹果官网与杂志级横向滑动画廊，手指左右翻看高定卡片，微信原生丝滑跟手。",
+  "category": "横向滑动画廊",
+  "theme": "apple-light",
+  "article_md": "article.md",
+  "modules": [
+    {
+      "type": "swipe-gallery",
+      "name": "减法设计四原则横滑画廊",
+      "kicker": "EDITORIAL SWIPE",
+      "title": "让版面安静下来的 4 条规矩",
+      "hint": "左右滑动翻阅",
+      "cards": [
+        {
+          "num": "01",
+          "tag": "SPACE",
+          "title": "留白是结构，不是空地",
+          "desc": "内容越复杂，留白越要坚定。空出来的地方决定视线停在哪。",
+          "foot": "01 / 04"
+        },
+        {
+          "num": "02",
+          "tag": "CONTRAST",
+          "title": "一屏只留一个主角",
+          "desc": "把最重要的那句话放大压重，其余信息退回灰色与小字。",
+          "highlight": true,
+          "foot": "02 / 04"
+        },
+        {
+          "num": "03",
+          "tag": "COLOR",
+          "title": "强调色只点在转折处",
+          "desc": "大面积用浅底和深墨维持秩序，高饱和色只负责定位与情绪。",
+          "foot": "03 / 04"
+        },
+        {
+          "num": "04",
+          "tag": "MOTION",
+          "title": "动效用来解释，不用来炫技",
+          "desc": "三秒内干净落定，交代东西从哪来、到哪去，绝不抢正文风头。",
+          "foot": "04 / 04"
+        }
+      ]
+    },
+    {
+      "type": "quote-seal",
+      "name": "减法设计收尾卡",
+      "kicker": "FEIS GALLERY",
+      "quote": "你让一大片地方空着，说明你真的知道什么重要。",
+      "author": "FEIS · 非叔"
+    }
+  ]
+}

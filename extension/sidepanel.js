@@ -1,8 +1,7 @@
-// 非叔 SVG 助手 · Side Panel 核心交互与状态管理
-// 遵循：复杂留给系统，不留给用户；按状态变化精细驱动苹果级微动效。
+// 非叔 SVG 助手 · Side Panel 核心交互与状态管理（V1.1 整篇一键复制 + 内置示例画廊）
 
 (() => {
-  const STORAGE_KEY = "feis_wx_svg_state_v1";
+  const STORAGE_KEY = "feis_wx_svg_state_v2";
 
   const FORBIDDEN_RULES = [
     { name: "id 属性", regex: /\bid\s*=\s*["'][^"']*["']/gi },
@@ -17,11 +16,14 @@
 
   const state = {
     packTitle: "",
+    articleHtml: "",
+    articleLint: null,
     modules: [],
+    view: "article",
     previewBg: "light",
     wechatReady: false,
     activeTabId: null,
-    undoSnapshot: null,
+    galleryOpen: false,
     clearArmTimer: null,
     toastTimer: null
   };
@@ -30,9 +32,17 @@
   const $app = document.getElementById("app");
   const $statusPill = document.getElementById("statusPill");
   const $statusText = document.getElementById("statusText");
+  const $btnToggleGallery = document.getElementById("btnToggleGallery");
+  const $btnCloseGallery = document.getElementById("btnCloseGallery");
+  const $galleryDrawerList = document.getElementById("galleryDrawerList");
+  const $emptyGalleryList = document.getElementById("emptyGalleryList");
   const $packTitle = document.getElementById("packTitle");
   const $packStat = document.getElementById("packStat");
+  const $btnWholeAction = document.getElementById("btnWholeAction");
+  const $btnWholeCopyOnly = document.getElementById("btnWholeCopyOnly");
   const $dropzone = document.getElementById("dropzone");
+  const $articleLintSlot = document.getElementById("articleLintSlot");
+  const $articleCanvas = document.getElementById("articleCanvas");
   const $moduleList = document.getElementById("moduleList");
   const $dragOverlay = document.getElementById("dragOverlay");
   const $fileInput = document.getElementById("fileInput");
@@ -44,9 +54,10 @@
   const $toast = document.getElementById("toast");
   const $toastMsg = document.getElementById("toastMsg");
   const $toastUndo = document.getElementById("toastUndo");
-  const $segBtns = Array.from(document.querySelectorAll(".seg-btn"));
+  const $viewBtns = Array.from(document.querySelectorAll(".view-btn"));
+  const $bgBtns = Array.from(document.querySelectorAll(".bg-btn"));
 
-  // ---------- 微信规则体检与一键净化 ----------
+  // ---------- 微信规则体检与净化 ----------
 
   function lintHtml(html) {
     const issues = [];
@@ -73,7 +84,7 @@
     return cleaned;
   }
 
-  function normalizeSvgSnippet(raw) {
+  function normalizeSnippet(raw) {
     const trimmed = (raw || "").trim();
     if (!trimmed) return "";
     if (/^<section\b/i.test(trimmed)) return trimmed;
@@ -83,9 +94,9 @@
     return trimmed;
   }
 
-  // ---------- 轻提示（可打断、支持撤销） ----------
+  // ---------- 轻提示 ----------
 
-  function showToast(msg, { duration = 1800, onUndo = null } = {}) {
+  function showToast(msg, { duration = 1900, onUndo = null } = {}) {
     clearTimeout(state.toastTimer);
     $toastMsg.textContent = msg;
     if (onUndo) {
@@ -104,14 +115,16 @@
     }, duration);
   }
 
-  // ---------- 存储持久化 ----------
+  // ---------- 持久化存储 ----------
 
   function saveState() {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set({
         [STORAGE_KEY]: {
           packTitle: state.packTitle,
+          articleHtml: state.articleHtml,
           modules: state.modules,
+          view: state.view,
           previewBg: state.previewBg
         }
       });
@@ -123,11 +136,14 @@
     try {
       const data = await chrome.storage.local.get(STORAGE_KEY);
       const saved = data[STORAGE_KEY];
-      if (saved && Array.isArray(saved.modules) && saved.modules.length > 0) {
-        state.packTitle = saved.packTitle || "已导入模块";
-        state.modules = saved.modules;
-        state.previewBg = saved.previewBg === "dark" ? "dark" : "light";
-        applyPreviewBg(state.previewBg, false);
+      if (saved && (saved.articleHtml || (Array.isArray(saved.modules) && saved.modules.length > 0))) {
+        state.packTitle = saved.packTitle || "已导入内容";
+        state.articleHtml = saved.articleHtml || "";
+        state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
+        state.modules = Array.isArray(saved.modules) ? saved.modules : [];
+        state.view = saved.view === "modules" ? "modules" : "article";
+        applyPreviewBg(saved.previewBg === "dark" ? "dark" : "light", false);
+        applyView(state.view, false);
         render();
       }
     } catch {
@@ -142,8 +158,13 @@
     $app.dataset.wechat = state.wechatReady ? "true" : "false";
     $statusPill.dataset.state = state.wechatReady ? "connected" : "offline";
     $statusText.textContent = state.wechatReady ? "已连接公众号" : "复制模式";
-    // 同步所有卡片主按钮文案
-    document.querySelectorAll(".act-primary").forEach((btn) => {
+
+    if ($btnWholeAction.dataset.state !== "success") {
+      $btnWholeAction.querySelector(".act-label").textContent = state.wechatReady
+        ? "一键插入整篇文章"
+        : "一键复制整篇文章";
+    }
+    document.querySelectorAll(".mod-card .act-primary").forEach((btn) => {
       if (btn.dataset.state !== "success") {
         btn.querySelector(".act-label").textContent = state.wechatReady ? "插入光标处" : "复制到公众号";
       }
@@ -177,27 +198,31 @@
 
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((msg) => {
-      if (msg && msg.type === "FEIS_TAB_CONTEXT") {
-        probeActiveTab();
-      }
+      if (msg && msg.type === "FEIS_TAB_CONTEXT") probeActiveTab();
     });
   }
 
-  // ---------- 复制与插入核心动作 ----------
+  // ---------- 双保险富文本复制与公众号光标插入 ----------
 
   async function copyRichHtml(html) {
+    // 方式 1：现代 ClipboardItem API（同时写入 text/html 与 text/plain）
     if (navigator.clipboard && window.ClipboardItem) {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          "text/html": new Blob([html], { type: "text/html" }),
-          "text/plain": new Blob([html], { type: "text/plain" })
-        })
-      ]);
-      return true;
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([html], { type: "text/plain" })
+          })
+        ]);
+        return true;
+      } catch {
+        // 降级到选区复制
+      }
     }
-    // 兜底隐藏选区复制
+    // 方式 2：隐藏富文本选区 execCommand('copy') 兜底
     const box = document.createElement("div");
-    box.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+    box.setAttribute("contenteditable", "true");
+    box.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;";
     box.innerHTML = html;
     document.body.appendChild(box);
     const range = document.createRange();
@@ -211,64 +236,85 @@
     return ok;
   }
 
-  async function triggerModuleAction(mod, cardEl, primaryBtn, forceCopyOnly = false) {
+  async function deliverHtml({ html, label, buttonEl, forceCopyOnly = false, onSuccess = null }) {
     let insertedDirect = false;
 
     if (!forceCopyOnly && state.wechatReady && state.activeTabId && typeof chrome !== "undefined" && chrome.tabs) {
       insertedDirect = await new Promise((resolve) => {
-        chrome.tabs.sendMessage(
-          state.activeTabId,
-          { type: "FEIS_INSERT_HTML", html: mod.html },
-          (res) => {
-            if (chrome.runtime.lastError || !res || !res.ok) resolve(false);
-            else resolve(true);
-          }
-        );
+        chrome.tabs.sendMessage(state.activeTabId, { type: "FEIS_INSERT_HTML", html }, (res) => {
+          if (chrome.runtime.lastError || !res || !res.ok) resolve(false);
+          else resolve(true);
+        });
       });
     }
 
     if (!insertedDirect) {
-      try {
-        await copyRichHtml(mod.html);
-      } catch {
-        showToast("复制受限，请重试或检查剪贴板权限");
+      const ok = await copyRichHtml(html);
+      if (!ok) {
+        showToast("复制失败，请点击页面空白处后重试");
         return;
       }
     }
 
-    // 标记已使用状态 + 按钮苹果级完成态微动效
-    mod.used = true;
-    cardEl.dataset.used = "true";
-    saveState();
+    if (onSuccess) onSuccess();
 
-    const labelEl = primaryBtn.querySelector(".act-label");
-    const iconEl = primaryBtn.querySelector(".act-icon");
-    primaryBtn.dataset.state = "success";
+    const labelEl = buttonEl.querySelector(".act-label");
+    const iconEl = buttonEl.querySelector(".act-icon");
+    const prevIdleLabel = buttonEl === $btnWholeAction
+      ? (state.wechatReady ? "一键插入整篇文章" : "一键复制整篇文章")
+      : (state.wechatReady ? "插入光标处" : "复制到公众号");
+
+    buttonEl.dataset.state = "success";
     labelEl.textContent = insertedDirect ? "已插入正文" : "已复制";
     iconEl.innerHTML = `<svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path class="check-path" d="M3.8 9.4L7.4 13L14.2 5.4"/></svg>`;
 
     showToast(
       insertedDirect
-        ? `已插入「${mod.name}」到编辑器`
-        : `已复制「${mod.name}」，在公众号按 ⌘V 粘贴`
+        ? `已将「${label}」插入公众号编辑器`
+        : `已复制「${label}」，去公众号编辑器按 ⌘V 粘贴`
     );
 
-    clearTimeout(primaryBtn._resetTimer);
-    primaryBtn._resetTimer = setTimeout(() => {
-      primaryBtn.dataset.state = "idle";
-      labelEl.textContent = state.wechatReady ? "插入光标处" : "复制到公众号";
+    clearTimeout(buttonEl._resetTimer);
+    buttonEl._resetTimer = setTimeout(() => {
+      buttonEl.dataset.state = "idle";
+      labelEl.textContent = prevIdleLabel;
       iconEl.innerHTML = "";
     }, 1500);
   }
 
-  // ---------- 文件解析（支持 feis-pack.json / 单文件 .html / .svg） ----------
+  // ---------- 载入整包数据（支持用户文件与内置示例） ----------
+
+  function loadPackObject(pack, toastLabel = "") {
+    state.packTitle = pack.title || "未命名文章";
+    state.articleHtml = pack.articleHtml || "";
+    state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
+    state.modules = (pack.modules || []).map((m, idx) => {
+      const html = normalizeSnippet(m.html || "");
+      return {
+        id: `${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        name: m.name || m.file || `模块 ${idx + 1}`,
+        type: m.type || "svg",
+        html,
+        lint: lintHtml(html),
+        used: false
+      };
+    });
+    const nextView = state.articleHtml ? "article" : "modules";
+    applyView(nextView, false);
+    setGalleryOpen(false);
+    saveState();
+    render();
+    if (toastLabel) showToast(toastLabel);
+  }
 
   async function importFiles(fileList) {
     const files = Array.from(fileList || []);
     if (files.length === 0) return;
 
-    const incoming = [];
-    let newTitle = "";
+    const incomingModules = [];
+    let importedPack = null;
+    let importedWholeHtml = "";
+    let importedWholeTitle = "";
 
     for (const file of files) {
       const text = await file.text();
@@ -277,28 +323,23 @@
       if (lower.endsWith(".json")) {
         try {
           const parsed = JSON.parse(text);
-          if (Array.isArray(parsed.modules)) {
-            newTitle = parsed.title || file.name.replace(/\.json$/i, "");
-            for (const m of parsed.modules) {
-              const html = normalizeSvgSnippet(m.html || "");
-              if (!html) continue;
-              incoming.push({
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                name: m.name || m.file || "未命名模块",
-                type: m.type || "svg",
-                html,
-                lint: lintHtml(html),
-                used: false
-              });
-            }
+          if (parsed.articleHtml || Array.isArray(parsed.modules)) {
+            importedPack = parsed;
+            if (!importedPack.title) importedPack.title = file.name.replace(/\.json$/i, "");
           }
         } catch {
           showToast(`无法解析 ${file.name}，请确认是有效的 feis-pack.json`);
         }
       } else if (lower.endsWith(".html") || lower.endsWith(".htm") || lower.endsWith(".svg")) {
-        const html = normalizeSvgSnippet(text);
-        if (html.includes("<svg")) {
-          incoming.push({
+        const html = normalizeSnippet(text);
+        if (!html.includes("<svg") && !html.includes("<section") && !html.includes("<p")) continue;
+
+        // 判断是整篇图文 HTML（含正文段落 <p>）还是单个 SVG 模块
+        if (lower.endsWith(".html") && /<p\b/i.test(html) && files.length === 1) {
+          importedWholeHtml = html;
+          importedWholeTitle = file.name.replace(/\.html?$/i, "");
+        } else {
+          incomingModules.push({
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             name: file.name.replace(/\.(html?|svg)$/i, ""),
             type: lower.endsWith(".svg") ? "svg" : "html",
@@ -310,32 +351,54 @@
       }
     }
 
-    if (incoming.length === 0) {
-      showToast("未识别到有效的 SVG 模块文件");
+    if (importedPack) {
+      loadPackObject(importedPack, `已载入「${importedPack.title}」`);
       return;
     }
 
-    if (newTitle) {
-      state.packTitle = newTitle;
-      state.modules = incoming;
-    } else {
-      if (!state.packTitle) state.packTitle = incoming.length === 1 ? incoming[0].name : "自定义模块组";
-      state.modules = [...state.modules, ...incoming];
+    if (importedWholeHtml) {
+      state.packTitle = importedWholeTitle || "完整文章";
+      state.articleHtml = importedWholeHtml;
+      state.articleLint = lintHtml(importedWholeHtml);
+      state.modules = [];
+      applyView("article", false);
+      saveState();
+      render();
+      showToast(`已导入完整文章「${state.packTitle}」`);
+      return;
     }
 
+    if (incomingModules.length === 0) {
+      showToast("未识别到有效的文章包或 SVG 文件");
+      return;
+    }
+
+    if (!state.packTitle) state.packTitle = incomingModules.length === 1 ? incomingModules[0].name : "自定义模块组";
+    state.modules = [...state.modules, ...incomingModules];
+    if (!state.articleHtml) applyView("modules", false);
     saveState();
     render();
-    showToast(`已导入 ${incoming.length} 个模块`);
+    showToast(`已导入 ${incomingModules.length} 个模块`);
   }
 
   async function importFromClipboard() {
     try {
       const text = await navigator.clipboard.readText();
-      if (!text || !text.includes("<svg")) {
-        showToast("剪贴板里没有检测到 SVG 代码");
+      if (!text || (!text.includes("<svg") && !text.includes("<section"))) {
+        showToast("剪贴板里没有检测到 SVG 或公众号 HTML 代码");
         return;
       }
-      const html = normalizeSvgSnippet(text);
+      const html = normalizeSnippet(text);
+      if (/<p\b/i.test(html)) {
+        state.packTitle = "剪贴板整篇文章";
+        state.articleHtml = html;
+        state.articleLint = lintHtml(html);
+        applyView("article", false);
+        saveState();
+        render();
+        showToast("已从剪贴板导入整篇文章");
+        return;
+      }
       const mod = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name: `剪贴板模块 ${state.modules.length + 1}`,
@@ -346,6 +409,7 @@
       };
       if (!state.packTitle) state.packTitle = "剪贴板导入";
       state.modules = [mod, ...state.modules];
+      if (!state.articleHtml) applyView("modules", false);
       saveState();
       render();
       showToast("已从剪贴板导入 1 个模块");
@@ -354,32 +418,111 @@
     }
   }
 
-  // ---------- 视图渲染 ----------
+  // ---------- 内置示例画廊渲染 ----------
+
+  function setGalleryOpen(open) {
+    state.galleryOpen = Boolean(open);
+    $app.dataset.galleryOpen = state.galleryOpen ? "true" : "false";
+    $btnToggleGallery.setAttribute("aria-expanded", state.galleryOpen ? "true" : "false");
+  }
+
+  function renderGalleryCards(container) {
+    const samples = Array.isArray(window.FEIS_BUILTIN_SAMPLES) ? window.FEIS_BUILTIN_SAMPLES : [];
+    container.innerHTML = "";
+    samples.forEach((s) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "gallery-item";
+      const kb = ((s.articleBytes || 0) / 1024).toFixed(1);
+      btn.innerHTML = `
+        <div class="gallery-item-top">
+          <span class="gallery-tag"></span>
+          <span class="gallery-kb">${(s.modules || []).length} 模块 · ${kb}KB</span>
+        </div>
+        <div class="gallery-title"></div>
+        <div class="gallery-desc"></div>
+      `;
+      btn.querySelector(".gallery-tag").textContent = s.category || "示例";
+      btn.querySelector(".gallery-title").textContent = s.title;
+      btn.querySelector(".gallery-desc").textContent = s.summary || "";
+      btn.onclick = () => loadPackObject(s, `已打开示例「${s.category || s.title}」`);
+      container.appendChild(btn);
+    });
+  }
+
+  // ---------- 视图与底色切换 ----------
 
   function applyPreviewBg(mode, persist = true) {
     state.previewBg = mode === "dark" ? "dark" : "light";
     $app.dataset.previewBg = state.previewBg;
-    $segBtns.forEach((btn) => {
+    $bgBtns.forEach((btn) => {
       btn.setAttribute("aria-checked", btn.dataset.bg === state.previewBg ? "true" : "false");
     });
     if (persist) saveState();
   }
 
+  function applyView(view, persist = true) {
+    state.view = view === "modules" ? "modules" : "article";
+    $app.dataset.view = state.view;
+    $viewBtns.forEach((btn) => {
+      btn.setAttribute("aria-checked", btn.dataset.view === state.view ? "true" : "false");
+    });
+    if (persist) saveState();
+  }
+
+  // ---------- 主渲染 ----------
+
+  function renderArticlePane() {
+    $articleLintSlot.innerHTML = "";
+    $articleCanvas.innerHTML = "";
+    if (!state.articleHtml) return;
+
+    if (state.articleLint && !state.articleLint.ok) {
+      const bar = document.createElement("div");
+      bar.className = "lint-bar";
+      bar.innerHTML = `<span>检测到微信禁用项：${state.articleLint.issues.join("、")}</span>
+        <button class="lint-fix-btn" type="button">一键净化</button>`;
+      bar.querySelector(".lint-fix-btn").onclick = () => {
+        state.articleHtml = sanitizeWechatHtml(state.articleHtml);
+        state.articleLint = lintHtml(state.articleHtml);
+        saveState();
+        bar.classList.add("is-resolved");
+        setTimeout(() => bar.remove(), 220);
+        $articleCanvas.innerHTML = state.articleHtml;
+        showToast("已净化整篇文章，现已符合微信规则");
+      };
+      $articleLintSlot.appendChild(bar);
+    }
+    $articleCanvas.innerHTML = state.articleHtml;
+  }
+
   function render() {
-    const hasItems = state.modules.length > 0;
+    const hasArticle = Boolean(state.articleHtml);
+    const hasModules = state.modules.length > 0;
+    const hasItems = hasArticle || hasModules;
+
     $app.dataset.hasItems = hasItems ? "true" : "false";
-    $packTitle.textContent = state.packTitle || "未命名模块包";
-    const totalKb = state.modules.reduce((acc, m) => acc + (m.lint?.bytes || 0), 0) / 1024;
-    $packStat.textContent = `${state.modules.length} 个模块 · ${totalKb.toFixed(1)}KB`;
+    $app.dataset.hasArticle = hasArticle ? "true" : "false";
+    $packTitle.textContent = state.packTitle || "未命名文章";
+
+    if (hasArticle) {
+      const artKb = ((state.articleLint?.bytes || new Blob([state.articleHtml]).size) / 1024).toFixed(1);
+      $packStat.textContent = hasModules ? `整篇 ${artKb}KB · ${state.modules.length} 模块` : `整篇 ${artKb}KB`;
+    } else {
+      const totalKb = state.modules.reduce((acc, m) => acc + (m.lint?.bytes || 0), 0) / 1024;
+      $packStat.textContent = `${state.modules.length} 个模块 · ${totalKb.toFixed(1)}KB`;
+    }
+
+    renderArticlePane();
 
     $moduleList.innerHTML = "";
-    if (!hasItems) return;
+    if (!hasModules) return;
 
     state.modules.forEach((mod, idx) => {
       const card = document.createElement("article");
       card.className = "mod-card";
       card.dataset.used = mod.used ? "true" : "false";
-      card.style.setProperty("--enter-delay", `${Math.min(idx * 50, 220)}ms`);
+      card.style.setProperty("--enter-delay", `${Math.min(idx * 45, 200)}ms`);
 
       const kb = ((mod.lint?.bytes || new Blob([mod.html]).size) / 1024).toFixed(1);
       const lintWarnHtml =
@@ -429,29 +572,30 @@
       const stage = card.querySelector(".mod-stage");
       stage.innerHTML = mod.html;
 
-      // 点击已用徽章可收回标记
       card.querySelector(".done-badge").onclick = () => {
         mod.used = false;
         card.dataset.used = "false";
         saveState();
       };
 
-      // 单卡平滑移除 + 4 秒撤销
       card.querySelector(".remove-btn").onclick = () => {
         const snapshot = {
           packTitle: state.packTitle,
+          articleHtml: state.articleHtml,
           modules: state.modules.map((m) => ({ ...m }))
         };
         card.classList.add("is-removing");
         setTimeout(() => {
           state.modules = state.modules.filter((m) => m.id !== mod.id);
-          if (state.modules.length === 0) state.packTitle = "";
+          if (state.modules.length === 0 && !state.articleHtml) state.packTitle = "";
           saveState();
           render();
           showToast(`已移除「${mod.name}」`, {
             duration: 4000,
             onUndo: () => {
               state.packTitle = snapshot.packTitle;
+              state.articleHtml = snapshot.articleHtml;
+              state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
               state.modules = snapshot.modules;
               saveState();
               render();
@@ -461,7 +605,6 @@
         }, 180);
       };
 
-      // 一键净化微信禁用项（原地局部更新，避免整页重绘导致其他卡片闪烁）
       const fixBtn = card.querySelector(".lint-fix-btn");
       if (fixBtn) {
         fixBtn.onclick = () => {
@@ -474,22 +617,38 @@
             setTimeout(() => bar.remove(), 220);
           }
           stage.innerHTML = mod.html;
-          const newKb = (mod.lint.bytes / 1024).toFixed(1);
-          card.querySelector(".mod-meta").textContent = `${newKb}KB · ${mod.type}`;
-          const totalKbNow = state.modules.reduce((acc, m) => acc + (m.lint?.bytes || 0), 0) / 1024;
-          $packStat.textContent = `${state.modules.length} 个模块 · ${totalKbNow.toFixed(1)}KB`;
-          showToast(`已净化「${mod.name}」，现已符合微信规则`);
+          card.querySelector(".mod-meta").textContent = `${(mod.lint.bytes / 1024).toFixed(1)}KB · ${mod.type}`;
+          showToast(`已净化「${mod.name}」`);
         };
       }
 
-      // 主按钮（自动插入或复制）
       const primaryBtn = card.querySelector(".act-primary");
-      primaryBtn.onclick = () => triggerModuleAction(mod, card, primaryBtn, false);
+      primaryBtn.onclick = () =>
+        deliverHtml({
+          html: mod.html,
+          label: mod.name,
+          buttonEl: primaryBtn,
+          forceCopyOnly: false,
+          onSuccess: () => {
+            mod.used = true;
+            card.dataset.used = "true";
+            saveState();
+          }
+        });
 
-      // 纯复制按钮
-      card.querySelector(".btn-copy-only").onclick = () => triggerModuleAction(mod, card, primaryBtn, true);
+      card.querySelector(".btn-copy-only").onclick = () =>
+        deliverHtml({
+          html: mod.html,
+          label: mod.name,
+          buttonEl: primaryBtn,
+          forceCopyOnly: true,
+          onSuccess: () => {
+            mod.used = true;
+            card.dataset.used = "true";
+            saveState();
+          }
+        });
 
-      // 单卡片重播
       const replayBtn = card.querySelector(".btn-replay");
       replayBtn.onclick = () => {
         replayBtn.classList.remove("spinning");
@@ -506,6 +665,29 @@
   }
 
   // ---------- 事件绑定 ----------
+
+  $btnToggleGallery.onclick = () => setGalleryOpen(!state.galleryOpen);
+  $btnCloseGallery.onclick = () => setGalleryOpen(false);
+
+  $btnWholeAction.onclick = () => {
+    if (!state.articleHtml) return;
+    deliverHtml({
+      html: state.articleHtml,
+      label: state.packTitle || "整篇文章",
+      buttonEl: $btnWholeAction,
+      forceCopyOnly: false
+    });
+  };
+
+  $btnWholeCopyOnly.onclick = () => {
+    if (!state.articleHtml) return;
+    deliverHtml({
+      html: state.articleHtml,
+      label: state.packTitle || "整篇文章",
+      buttonEl: $btnWholeAction,
+      forceCopyOnly: true
+    });
+  };
 
   $btnPickFile.onclick = (e) => {
     e.stopPropagation();
@@ -528,7 +710,10 @@
     importFromClipboard();
   };
 
-  $segBtns.forEach((btn) => {
+  $viewBtns.forEach((btn) => {
+    btn.onclick = () => applyView(btn.dataset.view);
+  });
+  $bgBtns.forEach((btn) => {
     btn.onclick = () => applyPreviewBg(btn.dataset.bg);
   });
 
@@ -536,6 +721,13 @@
     $btnReplayAll.classList.remove("spinning");
     void $btnReplayAll.offsetWidth;
     $btnReplayAll.classList.add("spinning");
+    if (state.view === "article" && state.articleHtml) {
+      $articleCanvas.innerHTML = "";
+      requestAnimationFrame(() => {
+        $articleCanvas.innerHTML = state.articleHtml;
+      });
+      return;
+    }
     document.querySelectorAll(".mod-card").forEach((card, idx) => {
       const stage = card.querySelector(".mod-stage");
       const mod = state.modules[idx];
@@ -547,7 +739,6 @@
     });
   };
 
-  // 两段式防误触清空 + 点击外部自动收回 + 4 秒撤销
   function disarmClear() {
     clearTimeout(state.clearArmTimer);
     $btnClear.dataset.armed = "false";
@@ -571,20 +762,27 @@
     disarmClear();
     const snapshot = {
       packTitle: state.packTitle,
-      modules: state.modules.map((m) => ({ ...m }))
+      articleHtml: state.articleHtml,
+      modules: state.modules.map((m) => ({ ...m })),
+      view: state.view
     };
     state.packTitle = "";
+    state.articleHtml = "";
+    state.articleLint = null;
     state.modules = [];
     saveState();
     render();
-    showToast("已清空模块列表", {
+    showToast("已清空当前内容", {
       duration: 4200,
       onUndo: () => {
         state.packTitle = snapshot.packTitle;
+        state.articleHtml = snapshot.articleHtml;
+        state.articleLint = state.articleHtml ? lintHtml(state.articleHtml) : null;
         state.modules = snapshot.modules;
+        applyView(snapshot.view, false);
         saveState();
         render();
-        showToast("已恢复模块列表");
+        showToast("已恢复内容");
       }
     });
   };
@@ -594,15 +792,13 @@
   window.addEventListener("dragenter", (e) => {
     e.preventDefault();
     dragDepth += 1;
-    if (state.modules.length === 0) {
+    if (!state.articleHtml && state.modules.length === 0) {
       $dropzone.classList.add("is-dragover");
     } else {
       $dragOverlay.classList.add("visible");
     }
   });
-  window.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
+  window.addEventListener("dragover", (e) => e.preventDefault());
   window.addEventListener("dragleave", (e) => {
     e.preventDefault();
     dragDepth = Math.max(0, dragDepth - 1);
@@ -622,6 +818,8 @@
   });
 
   // 初始化
+  renderGalleryCards($emptyGalleryList);
+  renderGalleryCards($galleryDrawerList);
   restoreState();
   probeActiveTab();
 })();

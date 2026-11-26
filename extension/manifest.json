@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "非叔 SVG 助手",
   "short_name": "feis-wx-svg",
-  "version": "1.0.0",
-  "description": "微信公众号原生 SVG 动效模块侧边栏：拖拽导入、自动规则体检、深浅底预览、一键插入公众号编辑器。",
+  "version": "1.1.0",
+  "description": "微信公众号原生 SVG 动效侧边栏：内置苹果风与互动示例画廊，支持整篇一键复制到公众号、自动规则体检与光标直插。",
   "permissions": [
     "sidePanel",
     "activeTab",

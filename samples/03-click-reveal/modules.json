@@ -1,0 +1,39 @@
+{
+  "title": "写给创作者的 3 个反常识真相 · 点击揭晓示例",
+  "summary": "复刻头部公众号爆款「点击揭晓」互动卡片，零 JS 零 id，轻点盖板丝滑滑开露出答案。",
+  "category": "点击揭晓互动",
+  "theme": "apple-light",
+  "article_md": "article.md",
+  "modules": [
+    {
+      "type": "click-reveal",
+      "name": "真相一点击揭晓",
+      "kicker": "QUESTION 01",
+      "prompt": "为什么很多精致长图，读者反而划得更快？",
+      "cta": "轻点揭晓答案",
+      "reveal_tag": "真相 01",
+      "reveal_title": "字不能选中，人会本能排斥",
+      "reveal_desc": "长文用原生排版保留阅读舒适度，只在关键节点放一块动效卡片，节奏和完读率才是最好的平衡。"
+    },
+    {
+      "type": "click-reveal",
+      "name": "真相二点击揭晓",
+      "kicker": "QUESTION 02",
+      "prompt": "公众号里最稳的 SVG 互动，为什么不用 id？",
+      "cta": "轻点揭晓答案",
+      "reveal_tag": "真相 02",
+      "reveal_title": "微信后台会静默抹掉所有 id",
+      "reveal_desc": "凡是依赖 id 的跨元素联动粘进去都会失效。把盖板做成点击自身后移出淡出，才是最稳妥的原生写法。"
+    },
+    {
+      "type": "click-reveal",
+      "name": "真相三点击揭晓",
+      "kicker": "QUESTION 03",
+      "prompt": "好排版和普通排版，最大的分界线是什么？",
+      "cta": "轻点揭晓答案",
+      "reveal_tag": "真相 03",
+      "reveal_title": "先立判断标准，再谈装饰元素",
+      "reveal_desc": "决定版面高级感的从来不是多加了几个图标，而是你清楚哪句话必须压住，哪块纸面应该留空。"
+    }
+  ]
+}

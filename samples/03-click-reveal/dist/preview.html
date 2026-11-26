@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>写给创作者的 3 个反常识真相 · 点击揭晓示例 · 非叔 SVG 预览</title>
+<style>
+  :root {
+    --bg: #F5F5F7; --surface: #FFFFFF; --text: #1D1D1F; --sub: #6E6E73;
+    --border: rgba(0,0,0,0.08); --accent: #0071E3; --ok: #1F8A4C;
+  }
+  [data-mode="dark"] {
+    --bg: #000000; --surface: #161618; --text: #F5F5F7; --sub: #A1A1A6;
+    --border: rgba(255,255,255,0.12); --accent: #2997FF; --ok: #30D158;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+    transition: background-color 240ms cubic-bezier(0.22,1,0.36,1), color 240ms cubic-bezier(0.22,1,0.36,1);
+    -webkit-font-smoothing: antialiased;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: transform 120ms ease, background-color 180ms ease;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 600; }
+  .phone {
+    width: 414px; max-width: calc(100% - 24px); margin: 24px auto 64px;
+    background: var(--surface); border-radius: 28px; padding: 28px 20px 44px;
+    border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    transition: background-color 240ms cubic-bezier(0.22,1,0.36,1);
+  }
+  .phone h1 { font-size: 22px; line-height: 1.38; margin: 0 0 8px; letter-spacing: -0.4px; }
+  .meta { font-size: 13px; color: var(--sub); margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .article-body { background: #FFFFFF; border-radius: 16px; padding: 14px 12px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(16px);
+    background: #1D1D1F; color: #F5F5F7; padding: 10px 18px; border-radius: 999px;
+    font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease, transform 220ms cubic-bezier(0.22,1,0.36,1);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button class="btn primary" onclick="copyWhole()">一键复制整篇到公众号</button>
+  <button class="btn" onclick="replayAll()">重播动效</button>
+  <button class="btn" onclick="toggleMode()">切换深浅底</button>
+</div>
+<div class="phone">
+  <h1>写给创作者的 3 个反常识真相 · 点击揭晓示例</h1>
+  <div class="meta">非叔 SVG 完整预览 · 可将同目录 feis-pack.json 拖入 Chrome 插件一键插入</div>
+  <div class="article-body" id="stage"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const PACK = {
+  "packVersion": 2,
+  "generator": "feis-wx-svg",
+  "title": "写给创作者的 3 个反常识真相 · 点击揭晓示例",
+  "summary": "复刻头部公众号爆款「点击揭晓」互动卡片，零 JS 零 id，轻点盖板丝滑滑开露出答案。",
+  "category": "点击揭晓互动",
+  "hasArticle": true,
+  "articleHtml": "<section style=\"padding:8px 4px;font-family:-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif;background-color:#FFFFFF;color:#1D1D1F;\"><p style=\"margin:0 0 20px;font-size:16px;line-height:1.85;letter-spacing:0.03em;color:#2C2C2E;\">公众号文章最怕从头平铺到尾，读者一目十行滑到底，什么也没留下。<\/p><p style=\"margin:0 0 20px;font-size:16px;line-height:1.85;letter-spacing:0.03em;color:#2C2C2E;\">如果在关键结论前放一块盖板，把悬念抛出来，让读者亲手点一下揭开答案，完读率和记忆点会明显不一样。<\/p><p style=\"margin:0 0 20px;font-size:16px;line-height:1.85;letter-spacing:0.03em;color:#2C2C2E;\">试试看，直接点下面这三张卡片。<\/p><section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 01<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>字不能选中，人会本能排斥<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>长文用原生排版保留阅读舒适度，只在<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>关键节点放一块动效卡片，节奏和完读<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>率才是最好的平衡。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 01<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>为什么很多精致长图，读者<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>反而划得更快？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section><section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 02<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>微信后台会静默抹掉所有 id<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>凡是依赖 id 的跨元素联动粘进去都<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>会失效。把盖板做成点击自身后移出淡<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>出，才是最稳妥的原生写法。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 02<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>公众号里最稳的 SVG 互动<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>，为什么不用 id？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section><section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 03<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>先立判断标准，再谈装饰元素<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>决定版面高级感的从来不是多加了几个<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>图标，而是你清楚哪句话必须压住，哪<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>块纸面应该留空。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 03<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>好排版和普通排版，最大的<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>分界线是什么？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section><p style=\"margin:0 0 20px;font-size:16px;line-height:1.85;letter-spacing:0.03em;color:#2C2C2E;\">这三张卡片全部基于微信公众号原生保留的点击触发机制，没有一行脚本，也没有任何元素 ID，粘进公众号直接就能点开。<\/p><\/section>",
+  "articleBytes": 11794,
+  "articleLint": {
+    "ok": true,
+    "issues": [],
+    "bytes": 11794
+  },
+  "createdAt": "2026-11-26T04:13:05.431337+00:00",
+  "modules": [
+    {
+      "id": "mod-01",
+      "index": 1,
+      "name": "真相一点击揭晓",
+      "type": "click-reveal",
+      "theme": "apple-light",
+      "file": "01-真相一点击揭晓.html",
+      "bytes": 3584,
+      "lint": {
+        "ok": true,
+        "issues": [],
+        "bytes": 3584
+      },
+      "html": "<section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 01<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>字不能选中，人会本能排斥<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>长文用原生排版保留阅读舒适度，只在<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>关键节点放一块动效卡片，节奏和完读<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>率才是最好的平衡。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 01<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>为什么很多精致长图，读者<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>反而划得更快？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section>"
+    },
+    {
+      "id": "mod-02",
+      "index": 2,
+      "name": "真相二点击揭晓",
+      "type": "click-reveal",
+      "theme": "apple-light",
+      "file": "02-真相二点击揭晓.html",
+      "bytes": 3590,
+      "lint": {
+        "ok": true,
+        "issues": [],
+        "bytes": 3590
+      },
+      "html": "<section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 02<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>微信后台会静默抹掉所有 id<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>凡是依赖 id 的跨元素联动粘进去都<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>会失效。把盖板做成点击自身后移出淡<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>出，才是最稳妥的原生写法。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 02<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>公众号里最稳的 SVG 互动<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>，为什么不用 id？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section>"
+    },
+    {
+      "id": "mod-03",
+      "index": 3,
+      "name": "真相三点击揭晓",
+      "type": "click-reveal",
+      "theme": "apple-light",
+      "file": "03-真相三点击揭晓.html",
+      "bytes": 3584,
+      "lint": {
+        "ok": true,
+        "issues": [],
+        "bytes": 3584
+      },
+      "html": "<section style=\"margin:24px 0;padding:0;line-height:0;font-size:0;border-radius:16px;overflow:hidden;background-color:#F5F5F7;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 750 410\" width=\"100%\" style=\"display:block;width:100%;height:auto;border-radius:16px;background-color:#F5F5F7;\"><rect x=\"0\" y=\"0\" width=\"750\" height=\"410\" rx=\"28\" fill=\"#F5F5F7\"/><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#FFFFFF\" stroke=\"#E5E5EA\" stroke-width=\"1.5\"/><rect x=\"64\" y=\"64\" width=\"12\" height=\"12\" rx=\"6\" fill=\"#1F8A4C\"/><text x=\"88\" y=\"77\" font-size=\"21\" font-weight=\"700\" letter-spacing=\"1.2\" fill=\"#1F8A4C\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>真相 03<\/text><line x1=\"64\" y1=\"104\" x2=\"686\" y2=\"104\" stroke=\"#E5E5EA\" stroke-width=\"1.2\"/><text x=\"64\" y=\"166\" font-size=\"38\" font-weight=\"700\" letter-spacing=\"-0.8\" fill=\"#1D1D1F\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>先立判断标准，再谈装饰元素<\/text><text x=\"64\" y=\"222\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>决定版面高级感的从来不是多加了几个<\/text><text x=\"64\" y=\"262\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>图标，而是你清楚哪句话必须压住，哪<\/text><text x=\"64\" y=\"302\" font-size=\"25\" font-weight=\"400\" fill=\"#6E6E73\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>块纸面应该留空。<\/text><g style=\"cursor:pointer;\"><rect x=\"32\" y=\"28\" width=\"686\" height=\"354\" rx=\"24\" fill=\"#1D1D1F\"/><circle cx=\"628\" cy=\"112\" r=\"96\" fill=\"none\" stroke=\"#0071E3\" stroke-width=\"1.5\" opacity=\"0.22\"/><text x=\"375\" y=\"96\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"600\" letter-spacing=\"2\" fill=\"#0071E3\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>QUESTION 03<\/text><text x=\"375\" y=\"176\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>好排版和普通排版，最大的<\/text><text x=\"375\" y=\"224\" text-anchor=\"middle\" font-size=\"34\" font-weight=\"700\" letter-spacing=\"-0.5\" fill=\"#F5F5F7\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>分界线是什么？<\/text><rect x=\"255\" y=\"266\" width=\"240\" height=\"58\" rx=\"29\" fill=\"#0071E3\"/><circle cx=\"294\" cy=\"295\" r=\"5\" fill=\"#FFFFFF\"><animate attributeName=\"opacity\" values=\"1;0.35;1\" dur=\"1.8s\" repeatCount=\"indefinite\"/><\/circle><text x=\"386\" y=\"303\" text-anchor=\"middle\" font-size=\"22\" font-weight=\"600\" fill=\"#FFFFFF\" font-family='-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Helvetica Neue\", sans-serif'>轻点揭晓答案<\/text><animate attributeName=\"opacity\" from=\"1\" to=\"0\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 0\" to=\"0 -44\" begin=\"click\" dur=\"0.45s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.22 1 0.36 1\"/><set attributeName=\"visibility\" to=\"hidden\" begin=\"click+0.46s\" fill=\"freeze\"/><\/g><\/svg><\/section>"
+    }
+  ]
+};
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._tt); window._tt = setTimeout(() => t.classList.remove('show'), 2000);
+}
+function renderAll() {
+  document.getElementById('stage').innerHTML = PACK.articleHtml;
+}
+function replayAll() {
+  const s = document.getElementById('stage');
+  s.innerHTML = '';
+  requestAnimationFrame(renderAll);
+}
+function toggleMode() {
+  document.documentElement.dataset.mode = document.documentElement.dataset.mode === 'dark' ? 'light' : 'dark';
+}
+async function copyWhole() {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([PACK.articleHtml], {type: 'text/html'}),
+      'text/plain': new Blob([PACK.articleHtml], {type: 'text/plain'})
+    })]);
+    showToast('已复制整篇文章，去公众号编辑器按 ⌘V 粘贴');
+  } catch (e) {
+    showToast('本地 file:// 受限时，请把 feis-pack.json 拖进 Chrome 插件一键复制');
+  }
+}
+renderAll();
+</script>
+</body>
+</html>
